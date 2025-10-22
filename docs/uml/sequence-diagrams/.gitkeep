@@ -1,0 +1,12 @@
+# PlantUML Sequence Diagram Placeholder
+
+This file ensures the directory is tracked by Git.
+
+Generate sequence diagrams using PlantUML from the `.puml` template files in this directory.
+
+To generate:
+```bash
+java -jar plantuml.jar *.puml
+```
+
+Or use VS Code PlantUML extension (Alt+D to preview).

@@ -1,0 +1,104 @@
+@startuml student-application-workflow
+' SC2002 Group 6 - Internship Placement Management System
+' Student Application Workflow
+
+title Internship Placement Management System
+subtitle Student Application Workflow
+footer SC2002 Group 6 - Page %page%
+
+' Participants
+actor Student as student
+participant "StudentController" as controller
+participant "StudentService" as service
+participant "ApplicationRepository" as appRepo
+participant "InternshipRepository" as intRepo
+participant "StudentRepository" as studentRepo
+database "CSV Storage" as csv
+
+' Sequence
+student -> controller: submitApplication(internshipId)
+activate controller
+
+controller -> service: createApplication(studentId, internshipId)
+activate service
+
+' Step 1: Validate student
+service -> studentRepo: getStudent(studentId)
+activate studentRepo
+studentRepo -> csv: read student data
+studentRepo --> service: Student
+deactivate studentRepo
+
+service -> service: validateStudent()
+
+alt Student can submit application
+    ' Step 2: Validate internship
+    service -> intRepo: getInternship(internshipId)
+    activate intRepo
+    intRepo -> csv: read internship data
+    intRepo --> service: InternshipOpportunity
+    deactivate intRepo
+    
+    service -> service: checkInternshipAvailability()
+    
+    alt Internship is accepting applications
+        ' Step 3: Check eligibility
+        service -> service: checkStudentEligibility(student, internship)
+        
+        alt Student is eligible
+            ' Step 4: Create application
+            service -> service: generateApplicationId()
+            service -> service: createApplicationObject()
+            
+            ' Step 5: Save application
+            service -> appRepo: save(application)
+            activate appRepo
+            appRepo -> csv: write application
+            appRepo --> service: success
+            deactivate appRepo
+            
+            ' Step 6: Update student record
+            service -> studentRepo: updateStudent(student)
+            activate studentRepo
+            studentRepo -> csv: update student
+            studentRepo --> service: success
+            deactivate studentRepo
+            
+            service --> controller: ApplicationDTO
+            controller --> student: 200 OK\n(Application submitted successfully)
+            
+        else Student not eligible (year-level restriction)
+            service --> controller: BusinessRuleException\n("Not eligible for this level")
+            controller --> student: 400 Bad Request\n(Year-level restriction)
+        end
+        
+    else Internship not accepting (closed or filled)
+        service --> controller: BusinessRuleException\n("Internship not accepting applications")
+        controller --> student: 400 Bad Request\n(Internship closed)
+    end
+    
+else Student cannot submit (max applications or has placement)
+    service --> controller: BusinessRuleException\n("Cannot submit application")
+    controller --> student: 400 Bad Request\n(Max applications reached)
+end
+
+deactivate service
+deactivate controller
+
+' Notes
+note right of service
+  Business Rules Checked:
+  1. Max 3 applications
+  2. No placement accepted
+  3. Internship accepting
+  4. Year-level eligibility
+  5. Major matching (if required)
+end note
+
+note over csv
+  All data persisted
+  to CSV files for
+  non-database storage
+end note
+
+@enduml

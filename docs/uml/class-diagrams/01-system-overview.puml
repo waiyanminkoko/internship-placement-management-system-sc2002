@@ -1,0 +1,86 @@
+@startuml system-overview
+' SC2002 Group 6 - Internship Placement Management System
+' Overall System Architecture
+
+title Internship Placement Management System
+subtitle System Overview - Class Diagram
+footer SC2002 Group 6 - Page %page%
+
+' Styling
+skinparam classAttributeIconSize 0
+skinparam monochrome false
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+' Main packages
+package "Model Layer" as model {
+    abstract class User
+    class Student
+    class CompanyRepresentative
+    class CareerCenterStaff
+    class InternshipOpportunity
+    class Application
+    class WithdrawalRequest
+}
+
+package "Enum Types" as enums {
+    enum UserRole
+    enum ApplicationStatus
+    enum ApprovalStatus
+    enum InternshipLevel
+    enum InternshipStatus
+    enum Major
+}
+
+package "Utility Layer" as util {
+    class CSVUtil
+    class CSVReader
+    class CSVWriter
+    class IdGenerator
+    class ValidationUtil
+    class DateUtil
+}
+
+package "Exception Layer" as exception {
+    class BusinessRuleException
+    class InvalidInputException
+    class ResourceNotFoundException
+    class UnauthorizedException
+    class DataPersistenceException
+}
+
+package "DTO Layer" as dto {
+    class ApiResponse
+    class LoginRequest
+}
+
+package "Configuration" as config {
+    class WebConfig
+}
+
+' Relationships (high-level)
+User <|-- Student
+User <|-- CompanyRepresentative
+User <|-- CareerCenterStaff
+
+Student --> Application : creates
+CompanyRepresentative --> InternshipOpportunity : creates
+Student --> WithdrawalRequest : submits
+
+User --> UserRole : has
+Application --> ApplicationStatus : has
+InternshipOpportunity --> InternshipLevel : has
+InternshipOpportunity --> InternshipStatus : has
+
+note right of model
+  Core domain models
+  with business logic
+end note
+
+note right of util
+  Helper classes for
+  CSV operations and
+  ID generation
+end note
+
+@enduml

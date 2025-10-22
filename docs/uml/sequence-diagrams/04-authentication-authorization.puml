@@ -1,0 +1,141 @@
+@startuml authentication-flow
+' SC2002 Group 6 - Internship Placement Management System
+' Authentication and Authorization Flow
+
+title Internship Placement Management System
+subtitle Authentication and Authorization Flow
+footer SC2002 Group 6 - Page %page%
+
+' Participants
+actor User as user
+participant "AuthController" as controller
+participant "AuthService" as authService
+participant "UserRepository" as userRepo
+database "CSV Storage" as csv
+
+' Login sequence
+user -> controller: POST /api/auth/login\n{userId, password}
+activate controller
+
+controller -> authService: authenticate(userId, password)
+activate authService
+
+' Step 1: Find user
+authService -> userRepo: findByUserId(userId)
+activate userRepo
+userRepo -> csv: read user data
+alt User found
+    userRepo --> authService: User
+else User not found
+    userRepo --> authService: null
+    authService --> controller: AuthenticationException
+    controller --> user: 401 Unauthorized\n(Invalid credentials)
+end
+deactivate userRepo
+
+' Step 2: Validate password
+authService -> authService: validatePassword(user, password)
+
+alt Password valid
+    ' Step 3: Check authorization (for company reps)
+    alt User is Company Representative
+        authService -> authService: checkAuthorization(user)
+        alt Not authorized
+            authService --> controller: UnauthorizedException
+            controller --> user: 403 Forbidden\n(Not authorized by staff)
+        end
+    end
+    
+    ' Step 4: Generate session
+    authService -> authService: generateSessionToken()
+    authService -> authService: updateLastLogin(user)
+    
+    authService -> userRepo: update(user)
+    activate userRepo
+    userRepo -> csv: update user record
+    deactivate userRepo
+    
+    authService --> controller: LoginResponse\n{token, user details}
+    controller --> user: 200 OK\n{sessionToken, role, name}
+    
+else Password invalid
+    authService --> controller: AuthenticationException
+    controller --> user: 401 Unauthorized\n(Invalid credentials)
+end
+
+deactivate authService
+deactivate controller
+
+' Change password sequence
+user -> controller: POST /api/auth/change-password\n{oldPassword, newPassword}
+activate controller
+
+controller -> authService: changePassword(userId, oldPwd, newPwd)
+activate authService
+
+authService -> userRepo: findByUserId(userId)
+activate userRepo
+userRepo -> csv: read user data
+userRepo --> authService: User
+deactivate userRepo
+
+authService -> authService: validateOldPassword()
+
+alt Old password correct
+    authService -> authService: validateNewPassword()
+    
+    alt New password valid
+        authService -> authService: hashPassword(newPassword)
+        authService -> authService: updateUserPassword(user)
+        
+        authService -> userRepo: update(user)
+        activate userRepo
+        userRepo -> csv: update user record
+        deactivate userRepo
+        
+        authService --> controller: success
+        controller --> user: 200 OK\n(Password changed)
+    else New password invalid
+        authService --> controller: ValidationException
+        controller --> user: 400 Bad Request\n(Invalid format)
+    end
+else Old password incorrect
+    authService --> controller: AuthenticationException
+    controller --> user: 401 Unauthorized\n(Wrong password)
+end
+
+deactivate authService
+deactivate controller
+
+' Logout sequence
+user -> controller: POST /api/auth/logout
+activate controller
+
+controller -> authService: logout(sessionToken)
+activate authService
+
+authService -> authService: invalidateSession(token)
+
+authService --> controller: success
+controller --> user: 200 OK\n(Logged out)
+
+deactivate authService
+deactivate controller
+
+' Notes
+note right of authService
+  Security Checks:
+  1. User exists
+  2. Password correct
+  3. Company rep authorized
+  4. Session valid
+  5. Password strength
+end note
+
+note over csv
+  User credentials and
+  session data stored
+  securely in CSV
+end note
+
+@enduml

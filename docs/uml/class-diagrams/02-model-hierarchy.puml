@@ -1,0 +1,171 @@
+@startuml model-hierarchy
+' SC2002 Group 6 - Internship Placement Management System
+' Model Layer Detailed Class Diagram
+
+title Internship Placement Management System
+subtitle Model Layer - Detailed Class Hierarchy
+footer SC2002 Group 6 - Page %page%
+
+' Styling
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+' User hierarchy
+abstract class User {
+    - userId: String
+    - password: String
+    - name: String
+    - email: String
+    - role: UserRole
+    - isFirstLogin: boolean
+    - lastLoginDate: LocalDateTime
+    + authenticate(password: String): boolean
+    + changePassword(oldPwd: String, newPwd: String): boolean
+    + {abstract} getDisplayInfo(): String
+}
+
+class Student extends User {
+    - yearOfStudy: int
+    - major: String
+    - applicationIds: List<String>
+    - acceptedPlacementId: String
+    {static} + MAX_APPLICATIONS: int = 3
+    + canApplyForLevel(level: InternshipLevel): boolean
+    + hasMaxApplications(): boolean
+    + hasAcceptedPlacement(): boolean
+    + canSubmitApplication(): boolean
+    + addApplication(applicationId: String): boolean
+    + removeApplication(applicationId: String): boolean
+    + acceptPlacement(placementId: String): void
+    + getApplicationCount(): int
+    + isJunior(): boolean
+    + isSenior(): boolean
+}
+
+class CompanyRepresentative extends User {
+    - companyName: String
+    - department: String
+    - position: String
+    - isAuthorized: boolean
+    - internshipIds: List<String>
+    {static} + MAX_INTERNSHIPS: int = 5
+    + hasMaxInternships(): boolean
+    + canCreateInternship(): boolean
+    + canLogin(): boolean
+    + addInternship(internshipId: String): boolean
+    + removeInternship(internshipId: String): boolean
+    + authorize(): void
+    + revokeAuthorization(): void
+    + getInternshipCount(): int
+}
+
+class CareerCenterStaff extends User {
+    - department: String
+    + hasAdminPrivileges(): boolean
+    + canAuthorizeRepresentatives(): boolean
+    + canApproveInternships(): boolean
+    + canProcessWithdrawals(): boolean
+    + canGenerateReports(): boolean
+}
+
+' Other model classes
+class InternshipOpportunity {
+    - opportunityId: String
+    - title: String
+    - description: String
+    - level: InternshipLevel
+    - preferredMajor: String
+    - openingDate: LocalDate
+    - closingDate: LocalDate
+    - status: InternshipStatus
+    - companyName: String
+    - representativeId: String
+    - totalSlots: int
+    - filledSlots: int
+    - visible: boolean
+    {static} + MAX_SLOTS: int = 10
+    + isAcceptingApplications(): boolean
+    + isVisibleToStudents(): boolean
+    + hasAvailableSlots(): boolean
+    + confirmPlacement(): boolean
+    + releasePlacement(): boolean
+    + getAvailableSlots(): int
+    + canBeEdited(): boolean
+    + matchesMajor(studentMajor: String): boolean
+    + approve(): void
+    + reject(): void
+    + toggleVisibility(): void
+}
+
+class Application {
+    - applicationId: String
+    - studentId: String
+    - opportunityId: String
+    - status: ApplicationStatus
+    - submissionDate: LocalDateTime
+    - statusUpdateDate: LocalDateTime
+    - placementAccepted: boolean
+    - placementAcceptanceDate: LocalDateTime
+    - representativeComments: String
+    + isPending(): boolean
+    + isSuccessful(): boolean
+    + isUnsuccessful(): boolean
+    + isWithdrawn(): boolean
+    + canAcceptPlacement(): boolean
+    + approve(comments: String): void
+    + reject(reason: String): void
+    + withdraw(reason: String): void
+    + acceptPlacement(): boolean
+    + canChangeStatus(): boolean
+    + getStatusDisplay(): String
+}
+
+class WithdrawalRequest {
+    - requestId: String
+    - applicationId: String
+    - studentId: String
+    - reason: String
+    - requestDate: LocalDateTime
+    - approvalStatus: ApprovalStatus
+    - reviewDate: LocalDateTime
+    - staffComments: String
+    - isBeforePlacement: boolean
+    + isPending(): boolean
+    + isApproved(): boolean
+    + isRejected(): boolean
+    + canBeReviewed(): boolean
+    + approve(comments: String): void
+    + reject(comments: String): void
+}
+
+' Relationships
+Student "1" --> "*" Application : submits
+CompanyRepresentative "1" --> "*" InternshipOpportunity : creates
+InternshipOpportunity "1" --> "*" Application : receives
+Student "1" --> "*" WithdrawalRequest : submits
+Application "1" --> "0..1" WithdrawalRequest : may have
+
+' Notes
+note right of Student
+  Business Rules:
+  - Max 3 applications
+  - Year 1-2: BASIC only
+  - Year 3-4: All levels
+  - Cannot apply after placement
+end note
+
+note right of CompanyRepresentative
+  Business Rules:
+  - Max 5 internships
+  - Must be authorized
+  - Can only edit PENDING internships
+end note
+
+note right of InternshipOpportunity
+  Business Rules:
+  - Max 10 slots
+  - Must be approved by staff
+  - Auto FILLED when slots full
+end note
+
+@enduml
