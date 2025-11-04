@@ -1,2 +1,5 @@
 .github/
 .vscode/
+# Ignore entire Maven build output directory (Created when building the project with Maven)
+target/
+
