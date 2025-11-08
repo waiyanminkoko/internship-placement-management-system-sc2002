@@ -1,19 +1,22 @@
 /*
  * StaffService.java
  * Contains the key logic behind the services that Career Centre Staff is expected to do. These functionalities are: 
- * 1) Authorising Representatives (authoriseRepresentative)
- * 2) Revoking authority of representatives (revokeAuthorization) 
- * 3) Approving Internship Entries (Approve Internship) 
- * 4) Approving Withdrawal Request (Approve withdrawal)
- * 5) Generating Report (TODO)
+ * 1) Authorising Representatives 
+ * 2) Revoking authority of representatives 
+ * 3) Approving Internship Entries
+ * 4) Approving Withdrawal Request
+ * 5) Generating Report
  * 
- * Last amended: 7 November 2025
+ * Last amended: 11 November 2025
  * Person amended: Charles 
  */
 
 package service;
 
 import java.util.List;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -22,6 +25,7 @@ import model.CareerCenterStaff;
 import model.CompanyRepresentative;
 import model.InternshipOpportunity;
 import model.WithdrawalRequest;
+import dto.ReportFilterRequest;
 
 @Service
 public class StaffService {
@@ -110,11 +114,60 @@ public class StaffService {
         }
     }
 
-    /**
-     * Placeholder for future report generation.
-     */
-    public String generateReport() {
-        // TODO: implement real report generation logic
-        return "Report generation not implemented yet.";
+public List<InternshipOpportunity> generateReport(List<InternshipOpportunity> allOpportunities, ReportFilterRequest filter) {
+    return allOpportunities.stream()
+            // Status filter
+            .filter(op -> filter.getStatuses() == null || filter.getStatuses().isEmpty() ||
+                    filter.getStatuses().contains(op.getStatus().name()))
+            // Preferred major filter
+            .filter(op -> filter.getPreferredMajors() == null || filter.getPreferredMajors().isEmpty() ||
+                    filter.getPreferredMajors().contains(op.getPreferredMajor()))
+            // Level filter
+            .filter(op -> filter.getLevels() == null || filter.getLevels().isEmpty() ||
+                    filter.getLevels().contains(op.getLevel().name()))
+            // Created date range filter (using openingDate as created date)
+            .filter(op -> filter.getCreatedFrom() == null || !op.getOpeningDate().isBefore(filter.getCreatedFrom()))
+            .filter(op -> filter.getCreatedTo() == null || !op.getOpeningDate().isAfter(filter.getCreatedTo()))
+            // Created by filter (representativeId)
+            .filter(op -> filter.getCreatedBy() == null || filter.getCreatedBy().isBlank() ||
+                    op.getRepresentativeId().equalsIgnoreCase(filter.getCreatedBy()))
+            // Visibility filter
+            .filter(op -> filter.getVisible() == null || op.isVisible() == filter.getVisible())
+            .collect(Collectors.toList());
+}
+
+public String generateReportSummary(List<InternshipOpportunity> filtered) {
+    if (filtered.isEmpty()) return "No internship opportunities match the given filters.";
+
+    StringBuilder sb = new StringBuilder("=== Internship Report ===\n");
+    for (InternshipOpportunity op : filtered) {
+        sb.append(String.format("%s | %s | %s | %s | Level: %s | Created: %s\n",
+                op.getTitle(),
+                op.getCompanyName(),
+                op.getStatus(),
+                op.getPreferredMajor(),
+                op.getLevel(),
+                op.getOpeningDate())); // using openingDate as created date
     }
+    sb.append("===========================\n");
+    return sb.toString();
+}
+
+public String exportReportToCSV(List<InternshipOpportunity> filtered, String filePath) {
+    try (FileWriter writer = new FileWriter(filePath)) {
+        writer.append("Title,Company,Status,Preferred Major,Level,Created Date\n");
+        for (InternshipOpportunity op : filtered) {
+            writer.append(String.format("%s,%s,%s,%s,%s,%s\n",
+                    op.getTitle(),
+                    op.getCompanyName(),
+                    op.getStatus(),
+                    op.getPreferredMajor(),
+                    op.getLevel(),
+                    op.getOpeningDate()));
+        }
+        return "Report successfully exported to: " + filePath;
+    } catch (IOException e) {
+        return "Error exporting report: " + e.getMessage();
+    }
+}
 }
