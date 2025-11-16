@@ -439,35 +439,31 @@ Contains reusable utility classes that provide common functionality across the a
 The folder structure follows a layered architecture:
 
 ```
-┌─────────────────────────────────────┐
-│     Application Entry Points        │  InternshipPlacementApplication.java
-│  (InternshipPlacementApplication_*) │  InternshipPlacementApplication_terminal.java
-└─────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────┐
-│         DTO Layer                   │  dto/
-│    (Data Transfer Objects)          │  API request/response objects
-└─────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────┐
-│       Service Layer                 │  service/ & service/impl/
-│     (Business Logic)                │  Business rules and workflows
-└─────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────┐
-│      Repository Layer               │  repository/ & repository/impl/
-│   (Data Access / Persistence)       │  CSV-based data storage
-└─────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────┐
-│        Model Layer                  │  model/
-│     (Domain Entities)               │  Business objects and logic
-└─────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────┐
-│      Utility & Support              │  util/, enums/, exception/
-│     (Cross-cutting Concerns)        │  Helpers and shared components
-└─────────────────────────────────────┘
+┌─────────────────────┐
+│  Controller Layer   │ ← Handles HTTP requests/responses
+│      (+ DTOs)       │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│   Service Layer     │ ← Business logic and workflows
+│    (+ DTOs)         │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│   Repository Layer  │ ← Data access abstraction
+│ (+ Persistence)     │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│   Data Storage      │ ← CSV files
+│       (CSV)         │
+└─────────────────────┘
+
+Cross-cutting concerns:
+- Models (Domain Layer) ← Used by all layers
+- Enums ← Used by all layers
+- Exceptions ← Used by all layers
+- Utils ← Used by all layers
 ```
 
 **Layer Responsibilities**:
