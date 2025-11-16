@@ -1,4 +1,0 @@
-InternshipID,Title,Description,Level,PreferredMajor,OpeningDate,ClosingDate,Status,CompanyName,CompanyRepEmail,Slots,FilledSlots,Visibility,CreatedBy
-INT001,Software Engineering Intern,Develop and maintain web applications using modern frameworks. Work with experienced developers on real projects.,ENTRY,Computer Science,2025-10-01,2025-12-31,APPROVED,SAP,alicetan@gmail.com,3,0,true,alicetan@gmail.com
-INT002,Data Science Intern,Analyze large datasets and build machine learning models. Experience with Python and statistical analysis required.,INTERMEDIATE,Data Science & AI,2025-10-05,2025-12-15,APPROVED,Google,boblee@gmail.com,2,0,true,boblee@gmail.com
-INT003,Cloud Infrastructure Intern,Work on Azure cloud infrastructure and DevOps pipelines. Learn about scalable systems and automation.,ENTRY,Computer Engineering,2025-10-10,2025-12-20,PENDING,Microsoft,charlielim@gmail.com,4,0,false,charlielim@gmail.com
