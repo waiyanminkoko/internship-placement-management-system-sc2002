@@ -15,7 +15,7 @@ package exception;
  * <p>This is a runtime exception that provides detailed context about parsing
  * failures to help identify and fix data quality issues.</p>
  * 
- * @author SC2002 Group 6 - Member 2
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  */

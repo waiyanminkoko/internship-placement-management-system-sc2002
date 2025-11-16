@@ -35,7 +35,7 @@ import java.util.List;
  * CSVWriter.writeAllRecords("data/students.csv", header, records, false);
  * }</pre>
  * 
- * @author SC2002 Group 6 - Member 2
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  * @see CSVReader
@@ -304,5 +304,22 @@ public class CSVWriter {
      */
     public static boolean exists(String filePath) {
         return Files.exists(Paths.get(filePath));
+    }
+
+    /**
+     * Legacy method for backward compatibility.
+     * Writes records to CSV file with headers.
+     * 
+     * @param filePath the path to the CSV file
+     * @param records list of records to write
+     * @param headers the header row
+     * @throws IOException if writing fails
+     */
+    public static void writeCSV(String filePath, List<String[]> records, String[] headers) throws IOException {
+        try {
+            writeAllRecords(filePath, headers, records, false);
+        } catch (DataPersistenceException e) {
+            throw new IOException("Failed to write CSV: " + e.getMessage(), e);
+        }
     }
 }

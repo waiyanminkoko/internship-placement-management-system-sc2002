@@ -1,0 +1,65 @@
+@startuml company-rep-approve-application-simplified
+' SC2002 Group 6 - Internship Placement Management System
+' Company Representative - Approve Application (Simplified)
+
+title Company Representative - Approve Internship Application
+
+' Styling
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam BoxPadding 10
+
+' Participants
+actor "Company\nRepresentative" as rep
+participant "CompanyRep\nController" as controller
+participant "CompanyRep\nService" as service
+participant "Application\nRepository" as appRepo
+participant "Internship\nRepository" as intRepo
+
+== Approve Application ==
+
+rep -> controller: POST /applications/{id}/approve
+activate controller
+
+controller -> service: handleApplicationDecision(repId, applicationId, APPROVE)
+activate service
+
+' Step 1: Retrieve Application
+service -> appRepo: findById(applicationId)
+activate appRepo
+appRepo --> service: Application
+deactivate appRepo
+
+' Step 2: Verify Ownership
+service -> intRepo: findById(internshipId)
+activate intRepo
+intRepo --> service: InternshipOpportunity
+deactivate intRepo
+
+service -> service: verifyOwnership(rep, internship)
+
+' Step 3: Validate & Check Availability
+service -> service: validateStatus(PENDING)
+service -> service: checkSlotAvailability()
+
+' Step 4: Approve Application
+service -> service: setStatus(SUCCESSFUL)
+
+service -> appRepo: save(application)
+activate appRepo
+appRepo --> service: success
+deactivate appRepo
+
+service --> controller: ApplicationResponse
+deactivate service
+
+controller --> rep: 200 OK\n(Application Approved)
+deactivate controller
+
+note right of rep
+    Student can view updated
+    application status on dashboard
+    and accept placement
+end note
+
+@enduml

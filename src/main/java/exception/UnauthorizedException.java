@@ -14,7 +14,7 @@ package exception;
  * 
  * <p>HTTP Status Code: 401 UNAUTHORIZED or 403 FORBIDDEN</p>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */

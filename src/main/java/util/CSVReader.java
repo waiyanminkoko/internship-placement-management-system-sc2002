@@ -12,7 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Specialized CSV reading utility using OpenCSV library.
@@ -37,7 +39,7 @@ import java.util.List;
  * }
  * }</pre>
  * 
- * @author SC2002 Group 6 - Member 2
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  * @see CSVWriter
@@ -275,6 +277,39 @@ public class CSVReader {
             result.add(recordList);
         }
 
+        return result;
+    }
+
+    /**
+     * Reads all records from a CSV file and returns them as a list of maps,
+     * where each map represents a record with column names as keys.
+     * 
+     * @param filePath the path to the CSV file
+     * @return list of maps, each map represents one CSV record with headers as keys
+     * @throws DataPersistenceException if file cannot be read or has no header
+     */
+    public static List<Map<String, String>> readCSVWithHeaders(String filePath) {
+        String[] headers = readHeader(filePath);
+        
+        if (headers.length == 0) {
+            throw new DataPersistenceException("CSV file has no headers: " + filePath);
+        }
+        
+        List<String[]> records = readAllRecords(filePath, true); // Skip header
+        List<Map<String, String>> result = new ArrayList<>();
+        
+        for (String[] record : records) {
+            Map<String, String> recordMap = new LinkedHashMap<>();
+            for (int i = 0; i < headers.length && i < record.length; i++) {
+                recordMap.put(headers[i], record[i] != null ? record[i] : "");
+            }
+            // Add empty strings for missing columns
+            for (int i = record.length; i < headers.length; i++) {
+                recordMap.put(headers[i], "");
+            }
+            result.add(recordMap);
+        }
+        
         return result;
     }
 }

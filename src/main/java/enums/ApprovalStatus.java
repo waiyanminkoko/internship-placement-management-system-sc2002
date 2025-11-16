@@ -26,7 +26,7 @@ package enums;
  *   <li>Withdrawal requests only processed when APPROVED</li>
  * </ul>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */
@@ -48,7 +48,13 @@ public enum ApprovalStatus {
      * Request has been rejected by career center staff.
      * Action is denied and cannot proceed.
      */
-    REJECTED("Rejected");
+    REJECTED("Rejected"),
+    
+    /**
+     * Request has been cancelled by the student who submitted it.
+     * Only applicable to withdrawal requests while in PENDING state.
+     */
+    CANCELLED("Cancelled");
 
     private final String displayName;
 
@@ -106,14 +112,23 @@ public enum ApprovalStatus {
     public boolean isRejected() {
         return this == REJECTED;
     }
+    
+    /**
+     * Checks if the status represents a cancelled state.
+     * 
+     * @return true if status is CANCELLED
+     */
+    public boolean isCancelled() {
+        return this == CANCELLED;
+    }
 
     /**
      * Checks if the status represents a final (non-changeable) decision.
      * 
-     * @return true if status is APPROVED or REJECTED
+     * @return true if status is APPROVED, REJECTED, or CANCELLED
      */
     public boolean isFinalDecision() {
-        return this == APPROVED || this == REJECTED;
+        return this == APPROVED || this == REJECTED || this == CANCELLED;
     }
 
     /**

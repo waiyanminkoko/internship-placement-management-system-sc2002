@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * // Returns: INT-20250115-123456-e5f6g7h8
  * }</pre>
  * 
- * @author SC2002 Group 6 - Member 2
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  */

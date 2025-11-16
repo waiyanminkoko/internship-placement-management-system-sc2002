@@ -1,0 +1,569 @@
+@startuml backend-oop-principles
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+
+' Styling for notes and annotations (yellow sticky note style)
+skinparam noteBorderColor #D4A017
+skinparam noteBackgroundColor #FFFACD
+skinparam noteFontColor #000000
+skinparam noteFontStyle bold
+skinparam noteShadowing true
+
+' Stereotypes with colored circles for different class types
+skinparam stereotypeCBackgroundColor #ADD1B2
+skinparam stereotypeIBackgroundColor #B4A7D6
+skinparam stereotypeABackgroundColor #F4C2C2
+skinparam stereotypeEBackgroundColor #FFFF99
+
+' Class background colors
+skinparam class {
+    BackgroundColor<<C>> #E8F5E9
+    BorderColor<<C>> #4CAF50
+    BackgroundColor<<I>> #E3F2FD
+    BorderColor<<I>> #2196F3
+    BackgroundColor<<A>> #FFF3E0
+    BorderColor<<A>> #FF9800
+}
+
+' Enum styling
+skinparam enum {
+    BackgroundColor #F3E5F5
+    BorderColor #9C27B0
+}
+
+' Package background colors
+skinparam packageBackgroundColor #FFFFFF
+skinparam packageBorderColor #999999
+
+title Internship Placement Management System - Backend OOP Architecture
+
+' ============================================
+' INHERITANCE HIERARCHY (OOP: Inheritance & Polymorphism)
+' ============================================
+
+package "Model Layer (Entities)" <<Rectangle>> #E8F5E9 {
+    
+    abstract class User <<A>> {
+        {field} - userId: String
+        {field} - password: String
+        {field} - name: String
+        {field} - email: String
+        {field} - role: UserRole
+        __
+        {method} + {abstract} getDisplayInfo(): String
+        {method} + changePassword(old, new): boolean
+        {method} + validatePassword(pwd): boolean
+        {method} + hasDefaultPassword(): boolean
+    }
+    
+    note top of User
+        **OOP: Abstraction**
+        - Abstract base class
+        - Abstract method: getDisplayInfo()
+        
+        **OOP: Encapsulation**
+        - Private fields with getters/setters
+        - Password validation methods
+    end note
+    
+    class Student <<C>> {
+        {field} - yearOfStudy: int
+        {field} - major: String
+        {field} - applicationIds: List<String>
+        {field} - acceptedPlacementId: String
+        {field} {static} + MAX_APPLICATIONS: int = 3
+        __
+        {method} + canApplyForLevel(level): boolean
+        {method} + hasMaxApplications(): boolean
+        {method} + hasAcceptedPlacement(): boolean
+        {method} + canSubmitApplication(): boolean
+        {method} + addApplication(id): boolean
+        {method} + acceptPlacement(id): void
+        {method} + getDisplayInfo(): String
+    }
+    
+    class CareerCenterStaff <<C>> {
+        {field} - department: String
+        {field} - approvedRepresentativeIds: List<String>
+        {field} - approvedInternshipIds: List<String>
+        __
+        {method} + hasAdminPrivileges(): boolean
+        {method} + canAuthorizeRepresentatives(): boolean
+        {method} + canApproveInternships(): boolean
+        {method} + authorizeRepresentative(id): void
+        {method} + approveInternship(id): void
+        {method} + getDisplayInfo(): String
+    }
+    
+    class CompanyRepresentative <<C>> {
+        {field} - companyName: String
+        {field} - department: String
+        {field} - position: String
+        {field} - isAuthorized: boolean
+        {field} - status: ApprovalStatus
+        {field} - internshipIds: List<String>
+        {field} {static} + MAX_INTERNSHIPS: int = 5
+        __
+        {method} + canCreateInternship(): boolean
+        {method} + hasMaxInternships(): boolean
+        {method} + isApproved(): boolean
+        {method} + authorize(): void
+        {method} + addInternship(id): boolean
+        {method} + getDisplayInfo(): String
+    }
+    
+    ' Inheritance relationships
+    User <|-- Student
+    User <|-- CareerCenterStaff
+    User <|-- CompanyRepresentative
+    
+    note right of Student
+        **OOP: Polymorphism**
+        Overrides getDisplayInfo()
+        with student-specific details
+        
+        **Business Rule:**
+        Max 3 concurrent applications
+    end note
+    
+    note right of CompanyRepresentative
+        **OOP: Polymorphism**
+        Overrides getDisplayInfo()
+        with company rep details
+        
+        **Business Rule:**
+        Max 5 internships per rep
+    end note
+    
+    ' ============================================
+    ' OTHER ENTITY MODELS
+    ' ============================================
+    
+    class Application <<C>> {
+        {field} - applicationId: String
+        {field} - studentId: String
+        {field} - internshipId: String
+        {field} - status: ApplicationStatus
+        {field} - submissionDate: LocalDate
+        __
+        {method} + isPending(): boolean
+        {method} + isSuccessful(): boolean
+        {method} + approve(): void
+        {method} + reject(reason): void
+        {method} + withdraw(): void
+    }
+    
+    class InternshipOpportunity <<C>> {
+        {field} - opportunityId: String
+        {field} - title: String
+        {field} - companyName: String
+        {field} - representativeId: String
+        {field} - status: InternshipStatus
+        {field} - level: InternshipLevel
+        {field} - totalSlots: int
+        {field} - filledSlots: int
+        {field} - isVisible: boolean
+        __
+        {method} + isAcceptingApplications(): boolean
+        {method} + hasAvailableSlots(): boolean
+        {method} + approve(): void
+        {method} + reject(): void
+        {method} + incrementFilledSlots(): void
+    }
+    
+    class WithdrawalRequest <<C>> {
+        {field} - requestId: String
+        {field} - studentId: String
+        {field} - applicationId: String
+        {field} - status: ApprovalStatus
+        {field} - reason: String
+        __
+        {method} + approve(staffId, note): void
+        {method} + reject(staffId, note): void
+        {method} + isPending(): boolean
+    }
+    
+    ' Associations between models
+    Student "1" -- "0..3" Application : submits >
+    CompanyRepresentative "1" -- "0..5" InternshipOpportunity : creates >
+    InternshipOpportunity "1" -- "0..*" Application : receives >
+    Student "1" -- "0..*" WithdrawalRequest : requests >
+    Application "1" -- "0..1" WithdrawalRequest : may have >
+    
+    note bottom of Application
+        **Association:**
+        Links Student to InternshipOpportunity
+        
+        **Multiplicity:**
+        1 Student can have 0-3 Applications
+        1 Internship can have many Applications
+    end note
+}
+
+' ============================================
+' SERVICE LAYER (OOP: Interface & Implementation)
+' ============================================
+
+package "Service Layer (Business Logic)" <<Rectangle>> #FFF9C4 {
+    
+    interface AuthenticationService <<I>> {
+        {method} + login(userId, pwd): User
+        {method} + logout(userId): void
+        {method} + changePassword(user, old, new): void
+        {method} + isAuthenticated(userId): boolean
+        {method} + registerRepresentative(...): void
+    }
+    
+    interface StudentService <<I>> {
+        {method} + browseInternships(filter): List
+        {method} + applyForInternship(studentId, internshipId): Application
+        {method} + viewApplications(studentId): List
+        {method} + acceptPlacement(studentId, applicationId): void
+        {method} + requestWithdrawal(studentId, applicationId): WithdrawalRequest
+    }
+    
+    interface StaffService <<I>> {
+        {method} + authorizeRepresentative(staff, repId, approve): void
+        {method} + approveOpportunity(staff, oppId, approve): void
+        {method} + approveWithdrawal(staff, reqId, approve): void
+        {method} + viewPendingRepresentatives(staff): List
+        {method} + generateReport(staff, filter): Map
+    }
+    
+    interface CompanyRepresentativeService <<I>> {
+        {method} + createInternship(repId, details): InternshipOpportunity
+        {method} + viewApplications(repId, internshipId): List
+        {method} + approveApplication(repId, appId): void
+        {method} + rejectApplication(repId, appId, reason): void
+        {method} + toggleVisibility(repId, internshipId): void
+    }
+    
+    class WithdrawalRequestService <<C>> {
+        {field} - withdrawalRequests: List<WithdrawalRequest>
+        {field} - csvFilePath: String
+        __
+        {method} + createWithdrawalRequest(...): WithdrawalRequest
+        {method} + findById(requestId): WithdrawalRequest
+        {method} + findByStudentId(studentId): List
+        {method} + findPendingRequests(): List
+        {method} + save(request): WithdrawalRequest
+    }
+    
+    class AuthenticationServiceImpl <<C>> {
+        {field} - studentRepository: StudentRepository
+        {field} - staffRepository: CareerCenterStaffRepository
+        {field} - representativeRepository: CompanyRepresentativeRepository
+        {field} - activeSessions: Map<String, User>
+        __
+        {method} + login(userId, pwd): User
+        {method} + logout(userId): void
+        {method} + changePassword(user, old, new): void
+        {method} - findUser(userId): User
+    }
+    
+    class StudentServiceImpl <<C>> {
+        {field} - studentRepository: StudentRepository
+        {field} - internshipRepository: InternshipOpportunityRepository
+        {field} - applicationRepository: ApplicationRepository
+        {field} - withdrawalRequestService: WithdrawalRequestService
+        __
+        {method} + applyForInternship(studentId, internshipId): Application
+        {method} + acceptPlacement(studentId, applicationId): void
+        {method} + requestWithdrawal(studentId, applicationId, reason): WithdrawalRequest
+        {method} - validateEligibility(student, internship): void
+    }
+    
+    class StaffServiceImpl <<C>> {
+        {field} - staffRepository: CareerCenterStaffRepository
+        {field} - representativeRepository: CompanyRepresentativeRepository
+        {field} - internshipRepository: InternshipOpportunityRepository
+        {field} - applicationRepository: ApplicationRepository
+        {field} - withdrawalRequestService: WithdrawalRequestService
+        __
+        {method} + authorizeRepresentative(staff, repId, approve): void
+        {method} + approveOpportunity(staff, oppId, approve): void
+        {method} + processWithdrawal(staff, requestId, approve): void
+        {method} + generateReport(staff, filter): Map
+    }
+    
+    class CompanyRepresentativeServiceImpl <<C>> {
+        {field} - representativeRepository: CompanyRepresentativeRepository
+        {field} - internshipRepository: InternshipOpportunityRepository
+        {field} - applicationRepository: ApplicationRepository
+        __
+        {method} + createInternship(repId, details): InternshipOpportunity
+        {method} + approveApplication(repId, appId): void
+        {method} - validateOwnership(repId, internshipId): void
+    }
+    
+    ' Interface implementations
+    AuthenticationService <|.. AuthenticationServiceImpl
+    StudentService <|.. StudentServiceImpl
+    StaffService <|.. StaffServiceImpl
+    CompanyRepresentativeService <|.. CompanyRepresentativeServiceImpl
+    
+    note top of AuthenticationService
+        **OOP: Interface**
+        Defines contract for authentication operations
+        
+        **OOP: Dependency Inversion**
+        High-level modules depend on abstractions
+        (interfaces), not concrete implementations
+    end note
+    
+    note bottom of AuthenticationServiceImpl
+        **OOP: Implementation**
+        Concrete implementation of interface
+        
+        **Dependency Injection:**
+        Repositories injected via @Autowired
+    end note
+}
+
+' ============================================
+' REPOSITORY LAYER (OOP: Generic Programming)
+' ============================================
+
+package "Repository Layer (Data Access)" <<Rectangle>> #E1F5FE {
+    
+    interface "Repository<T, ID>" as Repository <<I>> {
+        {method} + save(entity: T): T
+        {method} + findById(id: ID): Optional<T>
+        {method} + findAll(): List<T>
+        {method} + deleteById(id: ID): void
+        {method} + existsById(id: ID): boolean
+        {method} + count(): long
+    }
+    
+    interface StudentRepository <<I>> {
+        {method} + findByMajor(major): List<Student>
+        {method} + findByYear(year): List<Student>
+        {method} + findByAcceptedPlacement(hasPlacement): List<Student>
+    }
+    
+    interface CompanyRepresentativeRepository <<I>> {
+        {method} + findByApprovalStatus(approved): List
+        {method} + findByCompanyName(name): List
+    }
+    
+    interface InternshipOpportunityRepository <<I>> {
+        {method} + findByStatus(status): List
+        {method} + findByRepresentativeId(repId): List
+        {method} + findByLevel(level): List
+        {method} + findVisible(): List
+    }
+    
+    interface ApplicationRepository <<I>> {
+        {method} + findByStudentId(studentId): List
+        {method} + findByInternshipId(internshipId): List
+        {method} + findByStatus(status): List
+    }
+    
+    class CsvStudentRepository <<C>> {
+        {field} - csvFilePath: String
+        {field} - students: List<Student>
+        __
+        {method} + save(student): Student
+        {method} + findById(id): Optional<Student>
+        {method} + findAll(): List<Student>
+        {method} - loadFromCsv(): void
+        {method} - saveToCsv(): void
+    }
+    
+    class CsvInternshipOpportunityRepository <<C>> {
+        {field} - csvFilePath: String
+        {field} - opportunities: List<InternshipOpportunity>
+        __
+        {method} + save(opportunity): InternshipOpportunity
+        {method} + findByRepresentativeId(repId): List
+        {method} - loadFromCsv(): void
+        {method} - saveToCsv(): void
+    }
+    
+    ' Repository hierarchy
+    Repository <|-- StudentRepository
+    Repository <|-- CompanyRepresentativeRepository
+    Repository <|-- InternshipOpportunityRepository
+    Repository <|-- ApplicationRepository
+    
+    StudentRepository <|.. CsvStudentRepository
+    InternshipOpportunityRepository <|.. CsvInternshipOpportunityRepository
+    
+    note top of Repository
+        **OOP: Generics**
+        Generic interface for type-safe
+        CRUD operations
+        
+        **Pattern: Repository Pattern**
+        Abstracts data persistence logic
+    end note
+    
+    note bottom of CsvStudentRepository
+        **OOP: Implementation**
+        CSV-based persistence for Student entities
+        
+        **Encapsulation:**
+        Hides CSV file operations from clients
+    end note
+}
+
+' ============================================
+' ENUMS (OOP: Type Safety)
+' ============================================
+
+package "Enums (Type-Safe Constants)" <<Rectangle>> #F3E5F5 {
+    
+    enum UserRole {
+        STUDENT
+        COMPANY_REPRESENTATIVE
+        CAREER_CENTER_STAFF
+        __
+        + getDisplayName(): String
+    }
+    
+    enum ApplicationStatus {
+        PENDING
+        SUCCESSFUL
+        UNSUCCESSFUL
+        WITHDRAWN
+        __
+        + isPending(): boolean
+        + isSuccessful(): boolean
+    }
+    
+    enum ApprovalStatus {
+        PENDING
+        APPROVED
+        REJECTED
+        __
+        + isApproved(): boolean
+        + isPending(): boolean
+    }
+    
+    enum InternshipLevel {
+        BASIC
+        INTERMEDIATE
+        ADVANCED
+        __
+        + isEligibleForYear(year): boolean
+    }
+    
+    enum InternshipStatus {
+        PENDING
+        APPROVED
+        REJECTED
+        CLOSED
+        __
+        + isApproved(): boolean
+    }
+    
+    note bottom of UserRole
+        **OOP: Enumeration**
+        Type-safe constants for user roles
+        
+        **Benefit:**
+        - Compile-time type checking
+        - Cannot use invalid values
+        - IDE auto-completion support
+    end note
+}
+
+' ============================================
+' EXCEPTION HIERARCHY (OOP: Exception Handling)
+' ============================================
+
+package "Exception Layer (Error Handling)" <<Rectangle>> #FFEBEE {
+    
+    class RuntimeException <<Exception>> {
+    }
+    
+    class BusinessRuleException {
+        + BusinessRuleException(message: String)
+    }
+    
+    class InvalidInputException {
+        + InvalidInputException(message: String)
+    }
+    
+    class ResourceNotFoundException {
+        + ResourceNotFoundException(message: String)
+    }
+    
+    class UnauthorizedException {
+        + UnauthorizedException(message: String)
+    }
+    
+    RuntimeException <|-- BusinessRuleException
+    RuntimeException <|-- InvalidInputException
+    RuntimeException <|-- ResourceNotFoundException
+    RuntimeException <|-- UnauthorizedException
+    
+    note top of BusinessRuleException
+        **OOP: Inheritance**
+        Custom exceptions extend RuntimeException
+        
+        **Purpose:**
+        Specific exception types for
+        different error scenarios
+    end note
+}
+
+' ============================================
+' RELATIONSHIPS BETWEEN LAYERS
+' ============================================
+
+' Service depends on Repository (Dependency Injection)
+AuthenticationServiceImpl ..> StudentRepository : uses
+AuthenticationServiceImpl ..> CompanyRepresentativeRepository : uses
+StudentServiceImpl ..> StudentRepository : uses
+StudentServiceImpl ..> InternshipOpportunityRepository : uses
+StudentServiceImpl ..> ApplicationRepository : uses
+StaffServiceImpl ..> CompanyRepresentativeRepository : uses
+StaffServiceImpl ..> InternshipOpportunityRepository : uses
+CompanyRepresentativeServiceImpl ..> CompanyRepresentativeRepository : uses
+CompanyRepresentativeServiceImpl ..> InternshipOpportunityRepository : uses
+CompanyRepresentativeServiceImpl ..> ApplicationRepository : uses
+
+' Service works with Model entities
+StudentServiceImpl ..> Student : manipulates
+StudentServiceImpl ..> Application : creates
+CompanyRepresentativeServiceImpl ..> CompanyRepresentative : manipulates
+CompanyRepresentativeServiceImpl ..> InternshipOpportunity : creates
+StaffServiceImpl ..> CareerCenterStaff : manipulates
+
+' Model uses Enums
+User ..> UserRole : has
+Application ..> ApplicationStatus : has
+CompanyRepresentative ..> ApprovalStatus : has
+InternshipOpportunity ..> InternshipLevel : has
+InternshipOpportunity ..> InternshipStatus : has
+
+' Service throws Exceptions
+StudentServiceImpl ..> BusinessRuleException : throws
+StudentServiceImpl ..> InvalidInputException : throws
+AuthenticationServiceImpl ..> UnauthorizedException : throws
+AuthenticationServiceImpl ..> ResourceNotFoundException : throws
+
+' Legend
+legend bottom right
+    **OOP Principles Demonstrated:**
+    
+    1. **Abstraction** - User abstract class, Service interfaces
+    2. **Encapsulation** - Private fields, public methods
+    3. **Inheritance** - User → Student/Staff/CompanyRep
+    4. **Polymorphism** - getDisplayInfo() overridden in subclasses
+    5. **Interface** - Service interfaces define contracts
+    6. **Generics** - Repository<T, ID> generic interface
+    7. **Dependency Injection** - Services depend on Repository interfaces
+    8. **Exception Handling** - Custom exception hierarchy
+    
+    **Design Patterns:**
+    - Repository Pattern (data access abstraction)
+    - Service Layer Pattern (business logic separation)
+    - Dependency Inversion Principle (depend on abstractions)
+end legend
+
+@enduml

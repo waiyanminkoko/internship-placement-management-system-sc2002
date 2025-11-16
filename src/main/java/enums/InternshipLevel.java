@@ -17,7 +17,7 @@ package enums;
  *   <li>Year 3 and above students can apply for all levels (BASIC, INTERMEDIATE, ADVANCED)</li>
  * </ul>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */

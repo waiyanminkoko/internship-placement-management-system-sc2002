@@ -31,7 +31,7 @@ import java.util.Objects;
  *        → WITHDRAWN (student request or automatic)
  * </pre>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */
@@ -222,6 +222,45 @@ public class Application implements Serializable {
     }
 
     /**
+     * Checks if the application is currently active (not withdrawn).
+     * 
+     * @return true if status is not WITHDRAWN
+     */
+    public boolean isActive() {
+        return status != ApplicationStatus.WITHDRAWN;
+    }
+
+    /**
+     * Checks if the application can be withdrawn.
+     * 
+     * @return true if can be withdrawn
+     */
+    public boolean canBeWithdrawn() {
+        return status == ApplicationStatus.PENDING || 
+               (status == ApplicationStatus.SUCCESSFUL && !placementAccepted);
+    }
+
+    /**
+     * Sets the internship opportunity ID.
+     * 
+     * @param internshipId the internship ID
+     */
+    public void setInternshipId(String internshipId) {
+        this.opportunityId = internshipId;
+    }
+
+    /**
+     * Sets the application date using LocalDate.
+     * 
+     * @param date the application date
+     */
+    public void setApplicationDate(java.time.LocalDate date) {
+        if (date != null) {
+            this.submissionDate = date.atStartOfDay();
+        }
+    }
+
+    /**
      * Gets a human-readable representation of the application status.
      * 
      * @return status display name
@@ -231,6 +270,15 @@ public class Application implements Serializable {
             return "Placement Accepted";
         }
         return status.getDisplayName();
+    }
+
+    /**
+     * Gets the internship ID (alias for getOpportunityId).
+     * 
+     * @return the internship opportunity ID
+     */
+    public String getInternshipId() {
+        return opportunityId;
     }
 
     /**

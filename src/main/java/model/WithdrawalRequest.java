@@ -30,7 +30,7 @@ import java.util.Objects;
  *        → REJECTED (by career center staff) → Application remains active
  * </pre>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */
@@ -54,6 +54,11 @@ public class WithdrawalRequest implements Serializable {
      * ID of the application being withdrawn.
      */
     private String applicationId;
+
+    /**
+     * ID of the internship opportunity being withdrawn from.
+     */
+    private String internshipId;
 
     /**
      * Student's reason for requesting withdrawal.
@@ -222,6 +227,53 @@ public class WithdrawalRequest implements Serializable {
      */
     public String getStatusDisplay() {
         return status.getDisplayName();
+    }
+
+    /**
+     * Gets the withdrawal request ID (alias for getRequestId).
+     * 
+     * @return the withdrawal request ID
+     */
+    public String getWithdrawalId() {
+        return requestId;
+    }
+
+    /**
+     * Sets the withdrawal request ID (alias for setRequestId).
+     * 
+     * @param withdrawalId the withdrawal request ID
+     */
+    public void setWithdrawalId(String withdrawalId) {
+        this.requestId = withdrawalId;
+    }
+
+    /**
+     * Gets the internship opportunity ID.
+     * 
+     * @return the internship ID
+     */
+    public String getInternshipId() {
+        return internshipId;
+    }
+
+    /**
+     * Sets the internship opportunity ID.
+     * 
+     * @param internshipId the internship ID
+     */
+    public void setInternshipId(String internshipId) {
+        this.internshipId = internshipId;
+    }
+
+    /**
+     * Sets the request date using LocalDate.
+     * 
+     * @param date the request date
+     */
+    public void setRequestDate(java.time.LocalDate date) {
+        if (date != null) {
+            this.requestDate = date.atStartOfDay();
+        }
     }
 
     /**

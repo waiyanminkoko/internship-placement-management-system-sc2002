@@ -1,5 +1,0 @@
-CompanyRepID,Name,CompanyName,Department,Position,Email,Password,Status
-C00001,Alice Tan,SAP,HR,HR Manager,alicetan@gmail.com,password,active
-C00002,Bob Lee,Google,Engineering,Software Engineer,boblee@gmail.com,password,active
-C00003,Charlie Lim,Microsoft,Sales,Sales Executive,charlielim@gmail.com,password,active
-

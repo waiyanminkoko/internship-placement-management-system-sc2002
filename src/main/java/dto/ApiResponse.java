@@ -31,7 +31,7 @@ import java.time.LocalDateTime;
  * }</pre>
  * 
  * @param <T> the type of data payload
- * @author SC2002 Group 6 - Member 4
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  */

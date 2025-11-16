@@ -2,13 +2,17 @@
 ' SC2002 Group 6 - Internship Placement Management System
 ' Model Layer Detailed Class Diagram
 
-title Internship Placement Management System
-subtitle Model Layer - Detailed Class Hierarchy
+' Remove size limits to show full diagram
+scale max 4096 width
+scale max 4096 height
+
+title Internship Placement Management System\nModel Layer - Detailed Class Hierarchy
 footer SC2002 Group 6 - Page %page%
 
 ' Styling
 skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam dpi 150
 
 ' User hierarchy
 abstract class User {
@@ -24,7 +28,7 @@ abstract class User {
     + {abstract} getDisplayInfo(): String
 }
 
-class Student extends User {
+class Student {
     - yearOfStudy: int
     - major: String
     - applicationIds: List<String>
@@ -42,7 +46,7 @@ class Student extends User {
     + isSenior(): boolean
 }
 
-class CompanyRepresentative extends User {
+class CompanyRepresentative {
     - companyName: String
     - department: String
     - position: String
@@ -59,7 +63,7 @@ class CompanyRepresentative extends User {
     + getInternshipCount(): int
 }
 
-class CareerCenterStaff extends User {
+class CareerCenterStaff {
     - department: String
     + hasAdminPrivileges(): boolean
     + canAuthorizeRepresentatives(): boolean
@@ -124,12 +128,14 @@ class WithdrawalRequest {
     - requestId: String
     - applicationId: String
     - studentId: String
+    - internshipId: String
     - reason: String
     - requestDate: LocalDateTime
-    - approvalStatus: ApprovalStatus
-    - reviewDate: LocalDateTime
+    - status: ApprovalStatus
+    - processedDate: LocalDateTime
+    - processedBy: String
     - staffComments: String
-    - isBeforePlacement: boolean
+    - isAfterPlacementConfirmation: boolean
     + isPending(): boolean
     + isApproved(): boolean
     + isRejected(): boolean
@@ -138,7 +144,12 @@ class WithdrawalRequest {
     + reject(comments: String): void
 }
 
-' Relationships
+' Inheritance Relationships
+User <|-- Student
+User <|-- CompanyRepresentative
+User <|-- CareerCenterStaff
+
+' Association Relationships
 Student "1" --> "*" Application : submits
 CompanyRepresentative "1" --> "*" InternshipOpportunity : creates
 InternshipOpportunity "1" --> "*" Application : receives

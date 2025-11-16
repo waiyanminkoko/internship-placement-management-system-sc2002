@@ -15,7 +15,7 @@ package exception;
  * <p>This is a runtime exception to avoid cluttering business logic with
  * checked exception handling, while still providing detailed error information.</p>
  * 
- * @author SC2002 Group 6 - Member 2
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  */

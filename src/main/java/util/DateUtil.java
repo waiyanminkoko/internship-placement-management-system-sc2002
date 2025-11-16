@@ -36,14 +36,14 @@ import java.time.temporal.ChronoUnit;
  * boolean isValid = DateUtil.isValidDateRange(startDate, endDate);
  * }</pre>
  * 
- * @author SC2002 Group 6 - Member 2
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  */
 public class DateUtil {
 
     /**
-     * ISO date format: yyyy-MM-dd
+     * ISO date format: yyyy-MM-dd (for parsing input)
      */
     public static final DateTimeFormatter ISO_DATE_FORMATTER = 
         DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -55,10 +55,10 @@ public class DateUtil {
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     /**
-     * Display date format: dd/MM/yyyy
+     * Display date format: dd-MM-yyyy (standard display format)
      */
     public static final DateTimeFormatter DISPLAY_DATE_FORMATTER = 
-        DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     /**
      * Long date format: dd MMMM yyyy
@@ -82,7 +82,8 @@ public class DateUtil {
     // ==================== PARSING METHODS ====================
 
     /**
-     * Parses a date string in ISO format (yyyy-MM-dd).
+     * Parses a date string in multiple formats (dd-MM-yyyy or yyyy-MM-dd).
+     * Tries display format first, then ISO format.
      * 
      * @param dateString the date string to parse
      * @return LocalDate object, or null if string is null/empty
@@ -93,10 +94,16 @@ public class DateUtil {
             return null;
         }
 
+        // Try display format first (dd-MM-yyyy)
         try {
-            return LocalDate.parse(dateString.trim(), ISO_DATE_FORMATTER);
-        } catch (DateTimeParseException e) {
-            throw new InvalidInputException("Invalid date format. Expected: yyyy-MM-dd, got: " + dateString);
+            return LocalDate.parse(dateString.trim(), DISPLAY_DATE_FORMATTER);
+        } catch (DateTimeParseException e1) {
+            // Try ISO format (yyyy-MM-dd)
+            try {
+                return LocalDate.parse(dateString.trim(), ISO_DATE_FORMATTER);
+            } catch (DateTimeParseException e2) {
+                throw new InvalidInputException("Invalid date format. Expected: dd-MM-yyyy or yyyy-MM-dd, got: " + dateString);
+            }
         }
     }
 
@@ -175,13 +182,14 @@ public class DateUtil {
     // ==================== FORMATTING METHODS ====================
 
     /**
-     * Formats a LocalDate to ISO format string (yyyy-MM-dd).
+     * Formats a LocalDate to display format string (dd-MM-yyyy).
+     * Used for CSV storage and display.
      * 
      * @param date the date to format
      * @return formatted date string, or empty string if date is null
      */
     public static String formatDate(LocalDate date) {
-        return date != null ? date.format(ISO_DATE_FORMATTER) : "";
+        return date != null ? date.format(DISPLAY_DATE_FORMATTER) : "";
     }
 
     /**

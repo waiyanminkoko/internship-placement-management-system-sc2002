@@ -28,7 +28,7 @@ import java.util.List;
  * <p><b>Registration:</b> Students are automatically registered by reading from
  * the student list CSV file at system initialization.</p>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */
@@ -140,6 +140,15 @@ public class Student extends User {
     }
 
     /**
+     * Checks if the student has accepted an internship placement (boolean method).
+     * 
+     * @return true if student has accepted a placement, false otherwise
+     */
+    public boolean isHasAcceptedPlacement() {
+        return hasAcceptedPlacement();
+    }
+
+    /**
      * Checks if the student can submit a new application.
      * 
      * <p><b>Conditions:</b></p>
@@ -191,6 +200,56 @@ public class Student extends User {
      */
     public void acceptPlacement(String placementId) {
         this.acceptedPlacementId = placementId;
+    }
+
+    /**
+     * Sets whether the student has accepted a placement.
+     * 
+     * @param hasAccepted true if placement is accepted, false otherwise
+     */
+    public void setHasAcceptedPlacement(boolean hasAccepted) {
+        if (!hasAccepted) {
+            this.acceptedPlacementId = null;
+        }
+    }
+
+    /**
+     * Gets the year of study (alias for getYearOfStudy).
+     * 
+     * @return the year of study
+     */
+    public int getYear() {
+        return yearOfStudy;
+    }
+
+    /**
+     * Gets the count of active applications (alias for getApplicationIds().size()).
+     * 
+     * @return the number of active applications
+     */
+    public int getActiveApplicationsCount() {
+        return applicationIds != null ? applicationIds.size() : 0;
+    }
+
+    /**
+     * Checks if the student can apply for more applications.
+     * Same as canSubmitApplication() - provides more readable method name.
+     * 
+     * @return true if student can apply for more internships, false otherwise
+     */
+    public boolean canApplyMoreApplications() {
+        return canSubmitApplication();
+    }
+
+    /**
+     * Sets the year of study (alias for setYearOfStudy).
+     * 
+     * @param year the year of study
+     */
+    public void setYear(Integer year) {
+        if (year != null) {
+            this.yearOfStudy = year;
+        }
     }
 
     /**

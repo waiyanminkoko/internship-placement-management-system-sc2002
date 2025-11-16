@@ -1,0 +1,284 @@
+@startuml company-rep-application-review
+' SC2002 Group 6 - Internship Placement Management System
+' Company Representative Application Review Process
+
+title Internship Placement Management System - Company Representative Application Review Process
+
+' Styling
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+' Participants
+actor "Company\nRepresentative" as rep
+participant "CompanyRep\nController" as controller
+participant "CompanyRep\nService" as service
+participant "Application\nRepository" as appRepo
+participant "Internship\nRepository" as intRepo
+participant "Student\nRepository" as studentRepo
+database "CSV Storage" as csv
+
+== View Applications for Internship ==
+
+rep -> controller: GET /api/representatives/internships/{opportunityId}/applications\n(repId, opportunityId)
+activate controller
+
+controller -> controller: authenticate(repId)
+controller -> service: viewApplicationsForOpportunity(representative, opportunityId)
+activate service
+
+' Verify ownership
+service -> intRepo: findById(opportunityId)
+activate intRepo
+intRepo -> csv: read internship data
+intRepo --> service: InternshipOpportunity
+deactivate intRepo
+
+service -> service: verifyOwnership(representative, opportunity)
+
+alt Representative owns the internship
+    ' Get all applications for this internship
+    service -> appRepo: findByInternshipId(opportunityId)
+    activate appRepo
+    appRepo -> csv: read application data
+    appRepo --> service: List<Application>
+    deactivate appRepo
+    
+    ' Load student details for each application
+    loop for each application
+        service -> studentRepo: findById(studentId)
+        activate studentRepo
+        studentRepo -> csv: read student data
+        studentRepo --> service: Student
+        deactivate studentRepo
+        
+        service -> service: enrichApplicationWithStudentData()
+    end
+    
+    service --> controller: List<Application>
+    controller --> rep: 200 OK\n{applications with student details}
+    
+else Representative does not own internship
+    service --> controller: UnauthorizedException\n("Not your internship")
+    controller --> rep: 403 Forbidden\n(Unauthorized access)
+end
+
+deactivate service
+deactivate controller
+
+== Review Single Application ==
+
+rep -> rep: Review application details\n(student profile, GPA, major, year)
+
+rep -> rep: Make decision\n(approve/reject)
+
+== Approve Application ==
+
+rep -> controller: POST /api/representatives/applications/{applicationId}/approve\n(repId, applicationId, decision)
+activate controller
+
+controller -> controller: authenticate(repId)
+controller -> service: handleApplicationDecision(representative, applicationId, true)
+activate service
+
+' Step 1: Find and validate application
+service -> appRepo: findById(applicationId)
+activate appRepo
+appRepo -> csv: read application data
+appRepo --> service: Application
+deactivate appRepo
+
+alt Application exists
+    ' Step 2: Verify ownership of internship
+    service -> intRepo: findById(application.internshipId)
+    activate intRepo
+    intRepo -> csv: read internship data
+    intRepo --> service: InternshipOpportunity
+    deactivate intRepo
+    
+    service -> service: verifyOwnership(representative, opportunity)
+    
+    alt Representative owns the internship
+        ' Step 3: Validate application status
+        alt Application status is PENDING
+            ' Step 4: Check slot availability
+            service -> service: checkSlotAvailability(opportunity)
+            
+            alt Slots available (filledSlots < totalSlots)
+                ' Step 5: Approve application
+                service -> service: application.setStatus(SUCCESSFUL)
+                
+                service -> appRepo: save(application)
+                activate appRepo
+                appRepo -> csv: update application data
+                appRepo --> service: success
+                deactivate appRepo
+                
+                ' Step 6: Update student's application count
+                service -> studentRepo: findById(studentId)
+                activate studentRepo
+                studentRepo -> csv: read student data
+                studentRepo --> service: Student
+                deactivate studentRepo
+                
+                service -> service: student.updateApplicationStatus()
+                
+                service -> studentRepo: save(student)
+                activate studentRepo
+                studentRepo -> csv: update student data
+                deactivate studentRepo
+                
+                service --> controller: success
+                controller --> rep: 200 OK\n(Application approved successfully)
+                
+                note right of rep
+                    Student can view updated
+                    application status on
+                    dashboard and accept placement
+                end note
+                
+            else No slots available
+                service --> controller: BusinessRuleException\n("No available slots")
+                controller --> rep: 400 Bad Request\n(Internship full)
+            end
+            
+        else Application not PENDING (already processed)
+            service --> controller: BusinessRuleException\n("Application already processed")
+            controller --> rep: 400 Bad Request\n(Already processed)
+        end
+        
+    else Representative does not own internship
+        service --> controller: UnauthorizedException\n("Not your internship")
+        controller --> rep: 403 Forbidden\n(Unauthorized access)
+    end
+    
+else Application not found
+    service --> controller: ResourceNotFoundException\n("Application not found")
+    controller --> rep: 404 Not Found\n(Application not found)
+end
+
+deactivate service
+deactivate controller
+
+== Reject Application ==
+
+rep -> controller: POST /api/representatives/applications/{applicationId}/reject\n(repId, applicationId)
+activate controller
+
+controller -> controller: authenticate(repId)
+controller -> service: handleApplicationDecision(representative, applicationId, false)
+activate service
+
+' Step 1: Find and validate application
+service -> appRepo: findById(applicationId)
+activate appRepo
+appRepo -> csv: read application data
+appRepo --> service: Application
+deactivate appRepo
+
+alt Application exists
+    ' Step 2: Verify ownership
+    service -> intRepo: findById(application.internshipId)
+    activate intRepo
+    intRepo -> csv: read internship data
+    intRepo --> service: InternshipOpportunity
+    deactivate intRepo
+    
+    service -> service: verifyOwnership(representative, opportunity)
+    
+    alt Representative owns the internship
+        ' Step 3: Validate application status
+        alt Application status is PENDING
+            ' Step 4: Reject application
+            service -> service: application.setStatus(UNSUCCESSFUL)
+            
+            service -> appRepo: save(application)
+            activate appRepo
+            appRepo -> csv: update application data
+            appRepo --> service: success
+            deactivate appRepo
+            
+            ' Step 5: Update student record
+            service -> studentRepo: findById(studentId)
+            activate studentRepo
+            studentRepo -> csv: read student data
+            studentRepo --> service: Student
+            deactivate studentRepo
+            
+            service -> service: student.updateApplicationStatus()
+            
+            service -> studentRepo: save(student)
+            activate studentRepo
+            studentRepo -> csv: update student data
+            deactivate studentRepo
+            
+            service --> controller: success
+            controller --> rep: 200 OK\n(Application rejected)
+            
+            note right of rep
+                Student can view updated
+                status on dashboard and
+                apply to other opportunities
+            end note
+            
+        else Application not PENDING
+            service --> controller: BusinessRuleException\n("Application already processed")
+            controller --> rep: 400 Bad Request\n(Already processed)
+        end
+        
+    else Representative does not own internship
+        service --> controller: UnauthorizedException\n("Not your internship")
+        controller --> rep: 403 Forbidden\n(Unauthorized)
+    end
+    
+else Application not found
+    service --> controller: ResourceNotFoundException\n("Application not found")
+    controller --> rep: 404 Not Found
+end
+
+deactivate service
+deactivate controller
+
+== Bulk Review Process (Optional) ==
+
+opt Representative reviews multiple applications
+    loop for each pending application
+        rep -> rep: Review application
+        
+        alt Decision is approve
+            ref over rep, controller, service, appRepo, csv : Approve Application Flow
+        else Decision is reject
+            ref over rep, controller, service, appRepo, csv : Reject Application Flow
+        end
+        
+        note right of rep
+            Representative can
+            continue processing
+            applications until
+            all slots filled
+        end note
+    end
+end
+
+== Business Rules Summary ==
+
+note over service
+    **Business Rules Enforced:**
+    1. Only PENDING applications can be processed
+    2. Representative must own the internship
+    3. Slots must be available for approval
+    4. Application can only be processed once
+    5. Student and opportunity validations
+    6. Student records updated accordingly
+    7. Students view updates via dashboard
+end note
+
+note over csv
+    **Data Persistence:**
+    - Application status updates
+    - Student application counts
+    - Internship slot tracking
+    - Audit trail maintained
+    - No notification system
+end note
+
+@enduml

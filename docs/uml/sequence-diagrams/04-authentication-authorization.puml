@@ -2,140 +2,224 @@
 ' SC2002 Group 6 - Internship Placement Management System
 ' Authentication and Authorization Flow
 
-title Internship Placement Management System
-subtitle Authentication and Authorization Flow
-footer SC2002 Group 6 - Page %page%
+title Internship Placement Management System - Authentication and Authorization Flow
 
 ' Participants
 actor User as user
 participant "AuthController" as controller
 participant "AuthService" as authService
-participant "UserRepository" as userRepo
+participant "StudentRepository" as studentRepo
+participant "StaffRepository" as staffRepo
+participant "RepresentativeRepository" as repRepo
 database "CSV Storage" as csv
 
 ' Login sequence
 user -> controller: POST /api/auth/login\n{userId, password}
 activate controller
 
-controller -> authService: authenticate(userId, password)
-activate authService
+controller -> controller: Validate input\n(userId, password not empty)
 
-' Step 1: Find user
-authService -> userRepo: findByUserId(userId)
-activate userRepo
-userRepo -> csv: read user data
-alt User found
-    userRepo --> authService: User
-else User not found
-    userRepo --> authService: null
-    authService --> controller: AuthenticationException
-    controller --> user: 401 Unauthorized\n(Invalid credentials)
-end
-deactivate userRepo
-
-' Step 2: Validate password
-authService -> authService: validatePassword(user, password)
-
-alt Password valid
-    ' Step 3: Check authorization (for company reps)
-    alt User is Company Representative
-        authService -> authService: checkAuthorization(user)
-        alt Not authorized
-            authService --> controller: UnauthorizedException
-            controller --> user: 403 Forbidden\n(Not authorized by staff)
+alt Input invalid
+    controller --> user: 400 Bad Request\n(User ID/Password cannot be empty)
+else Input valid
+    controller -> authService: login(userId, password)
+    activate authService
+    
+    ' Step 1: Find user across all repositories
+    authService -> authService: findUser(userId)
+    activate authService
+    
+    authService -> studentRepo: findById(userId)
+    activate studentRepo
+    studentRepo -> csv: read students.csv
+    alt Student found
+        studentRepo --> authService: Optional<Student>
+    else Not found
+        studentRepo --> authService: Optional.empty()
+        deactivate studentRepo
+        
+        authService -> staffRepo: findById(userId)
+        activate staffRepo
+        staffRepo -> csv: read staff.csv
+        alt Staff found
+            staffRepo --> authService: Optional<CareerCenterStaff>
+        else Not found
+            staffRepo --> authService: Optional.empty()
+            deactivate staffRepo
+            
+            authService -> repRepo: findById(userId)
+            activate repRepo
+            repRepo -> csv: read representatives.csv
+            alt Representative found
+                repRepo --> authService: Optional<CompanyRepresentative>
+            else Not found
+                repRepo --> authService: Optional.empty()
+                deactivate repRepo
+                authService --> authService: null
+            end
         end
     end
+    deactivate authService
     
-    ' Step 4: Generate session
-    authService -> authService: generateSessionToken()
-    authService -> authService: updateLastLogin(user)
-    
-    authService -> userRepo: update(user)
-    activate userRepo
-    userRepo -> csv: update user record
-    deactivate userRepo
-    
-    authService --> controller: LoginResponse\n{token, user details}
-    controller --> user: 200 OK\n{sessionToken, role, name}
-    
-else Password invalid
-    authService --> controller: AuthenticationException
-    controller --> user: 401 Unauthorized\n(Invalid credentials)
+    alt User not found
+        authService --> controller: throw ResourceNotFoundException(\n"User not found with ID: " + userId)
+        controller --> user: 404 Not Found\n(User not found)
+    else User found
+        ' Step 2: Validate password (plain text comparison)
+        authService -> authService: user.getPassword().equals(password)
+        
+        alt Password invalid
+            authService --> controller: throw UnauthorizedException("Invalid credentials")
+            controller --> user: 401 Unauthorized\n(Invalid credentials)
+        else Password valid
+            ' Step 3: Check authorization (for company reps only)
+            alt User is Company Representative
+                authService -> authService: Check if rep.isApproved()
+                alt Not approved (PENDING or REJECTED)
+                    authService --> controller: throw UnauthorizedException(\n"Account is not yet approved")
+                    controller --> user: 401 Unauthorized\n(Account not yet approved)
+                end
+            end
+            
+            ' Step 4: Store session (in-memory)
+            authService -> authService: activeSessions.put(userId, user)
+            note right: No password hashing\nNo last login update\nStored in ConcurrentHashMap
+            
+            authService --> controller: User
+            deactivate authService
+            
+            ' Step 5: Generate token in Controller (not Service)
+            controller -> controller: token = UUID.randomUUID().toString()
+            
+            ' Step 6: Build response
+            controller -> controller: Build LoginResponse\n(userId, name, role, email, token)
+            
+            controller --> user: 200 OK\nApiResponse<LoginResponse>\n{success: true, data: {...}}
+        end
+    end
 end
 
-deactivate authService
 deactivate controller
 
 ' Change password sequence
-user -> controller: POST /api/auth/change-password\n{oldPassword, newPassword}
+user -> controller: POST /api/auth/change-password\n?userId={userId}\n{oldPassword, newPassword}
 activate controller
 
-controller -> authService: changePassword(userId, oldPwd, newPwd)
+' Step 1: First verify old password by calling login
+controller -> authService: login(userId, oldPassword)
 activate authService
+note right: First password verification\n(Same flow as login above)
 
-authService -> userRepo: findByUserId(userId)
-activate userRepo
-userRepo -> csv: read user data
-userRepo --> authService: User
-deactivate userRepo
+authService -> authService: findUser(userId)
+authService -> authService: Verify password matches
 
-authService -> authService: validateOldPassword()
-
-alt Old password correct
-    authService -> authService: validateNewPassword()
+alt User not found or password wrong
+    authService --> controller: throw UnauthorizedException/ResourceNotFoundException
+    controller --> user: 401 Unauthorized / 404 Not Found
+else Old password verified
+    authService --> controller: User
+    deactivate authService
     
-    alt New password valid
-        authService -> authService: hashPassword(newPassword)
-        authService -> authService: updateUserPassword(user)
+    ' Step 2: Now change the password
+    controller -> authService: changePassword(user, oldPassword, newPassword)
+    activate authService
+    
+    ' Step 3: Verify old password AGAIN (redundant check)
+    authService -> authService: user.getPassword().equals(oldPassword)
+    note right: Second password verification\n(Redundant - already checked in login)
+    
+    alt Old password incorrect (shouldn't happen)
+        authService --> controller: throw UnauthorizedException(\n"Current password is incorrect")
+        controller --> user: 401 Unauthorized
+    else Old password correct
+        ' Step 4: Validate new password strength
+        authService -> authService: ValidationUtil.isValidPassword(newPassword)
         
-        authService -> userRepo: update(user)
-        activate userRepo
-        userRepo -> csv: update user record
-        deactivate userRepo
-        
-        authService --> controller: success
-        controller --> user: 200 OK\n(Password changed)
-    else New password invalid
-        authService --> controller: ValidationException
-        controller --> user: 400 Bad Request\n(Invalid format)
+        alt New password invalid (< 6 characters)
+            authService --> controller: throw InvalidInputException(\n"Password must be at least 6 characters")
+            controller --> user: 400 Bad Request\n(Password too short)
+        else New password valid
+            ' Step 5: Update password (plain text - no hashing)
+            authService -> authService: user.setPassword(newPassword)
+            note right: Plain text storage\nNo password hashing
+            
+            ' Step 6: Save based on user role
+            alt User is Student
+                authService -> studentRepo: save(student)
+                activate studentRepo
+                studentRepo -> csv: write students.csv
+                studentRepo --> authService: Student
+                deactivate studentRepo
+            else User is CareerCenterStaff
+                authService -> staffRepo: save(staff)
+                activate staffRepo
+                staffRepo -> csv: write staff.csv
+                staffRepo --> authService: CareerCenterStaff
+                deactivate staffRepo
+            else User is CompanyRepresentative
+                authService -> repRepo: save(representative)
+                activate repRepo
+                repRepo -> csv: write representatives.csv
+                repRepo --> authService: CompanyRepresentative
+                deactivate repRepo
+            end
+            
+            authService --> controller: void (success)
+            deactivate authService
+            
+            controller --> user: 200 OK\nApiResponse<Void>\n{success: true, message: "Password changed"}
+        end
     end
-else Old password incorrect
-    authService --> controller: AuthenticationException
-    controller --> user: 401 Unauthorized\n(Wrong password)
 end
 
-deactivate authService
 deactivate controller
 
 ' Logout sequence
-user -> controller: POST /api/auth/logout
+user -> controller: POST /api/auth/logout\n?userId={userId}
 activate controller
 
-controller -> authService: logout(sessionToken)
+controller -> authService: logout(userId)
 activate authService
+note right: Uses userId, not token
 
-authService -> authService: invalidateSession(token)
+' Remove from in-memory session map
+authService -> authService: activeSessions.remove(userId)
+note right: Simple removal from\nConcurrentHashMap\nNo database update
 
-authService --> controller: success
-controller --> user: 200 OK\n(Logged out)
-
+authService --> controller: void (success)
 deactivate authService
+
+controller --> user: 200 OK\nApiResponse<Void>\n{success: true, message: "Logout successful"}
+
 deactivate controller
 
 ' Notes
 note right of authService
-  Security Checks:
-  1. User exists
-  2. Password correct
-  3. Company rep authorized
-  4. Session valid
-  5. Password strength
+  **Security Implementation:**
+  1. Plain text password storage
+  2. In-memory session management
+  3. UUID-based tokens (not JWT)
+  4. Company rep approval check
+  5. Password validation (min 6 chars)
+  6. No last login tracking
+  7. No password hashing
 end note
 
 note over csv
-  User credentials and
-  session data stored
-  securely in CSV
+  **CSV Storage:**
+  - students.csv
+  - staff.csv
+  - representatives.csv
+  
+  **Note:** Passwords stored
+  in plain text (not secure)
+end note
+
+note over controller
+  **Token Generation:**
+  Generated in Controller
+  using UUID.randomUUID()
+  (Not in Service layer)
 end note
 
 @enduml

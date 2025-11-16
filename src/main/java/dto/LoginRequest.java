@@ -7,7 +7,7 @@ package dto;
  * <p><strong>Note:</strong> Validation annotations removed to avoid external dependencies.
  * Validation will be performed in the service layer using ValidationUtil.</p>
  * 
- * @author SC2002 Group 6 - Member 4
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  */

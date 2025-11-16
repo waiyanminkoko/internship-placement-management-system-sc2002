@@ -26,7 +26,7 @@ import java.util.Objects;
  *   <li>Level determines student eligibility (Year 1-2 for BASIC only)</li>
  * </ul>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */
@@ -81,6 +81,16 @@ public class InternshipOpportunity implements Serializable {
     private LocalDate closingDate;
 
     /**
+     * Date when the internship period starts.
+     */
+    private LocalDate startDate;
+
+    /**
+     * Date when the internship period ends.
+     */
+    private LocalDate endDate;
+
+    /**
      * Current status of the internship opportunity.
      * Flow: PENDING → APPROVED → FILLED (or REJECTED)
      */
@@ -95,6 +105,16 @@ public class InternshipOpportunity implements Serializable {
      * User ID of the company representative who created this opportunity.
      */
     private String representativeId;
+
+    /**
+     * Email of the company representative who created this opportunity.
+     */
+    private String createdBy;
+
+    /**
+     * Email of the company representative for this opportunity.
+     */
+    private String companyRepEmail;
 
     /**
      * Total number of available slots for this internship.
@@ -116,12 +136,20 @@ public class InternshipOpportunity implements Serializable {
     private boolean visible;
 
     /**
+     * Transient field: Count of pending applications for this opportunity.
+     * This is calculated at runtime and not persisted to CSV.
+     * Used for UI display purposes only.
+     */
+    private transient int pendingApplicationCount;
+
+    /**
      * Default constructor required for serialization.
      */
     public InternshipOpportunity() {
         this.status = InternshipStatus.PENDING;
         this.filledSlots = 0;
         this.visible = true;
+        this.pendingApplicationCount = 0;
     }
 
     /**
@@ -134,6 +162,8 @@ public class InternshipOpportunity implements Serializable {
      * @param preferredMajor preferred major or "Any"
      * @param openingDate application opening date
      * @param closingDate application closing date
+     * @param startDate internship start date
+     * @param endDate internship end date
      * @param companyName company offering the internship
      * @param representativeId ID of the representative creating the opportunity
      * @param totalSlots number of available positions
@@ -141,6 +171,7 @@ public class InternshipOpportunity implements Serializable {
     public InternshipOpportunity(String opportunityId, String title, String description,
                                 InternshipLevel level, String preferredMajor,
                                 LocalDate openingDate, LocalDate closingDate,
+                                LocalDate startDate, LocalDate endDate,
                                 String companyName, String representativeId, int totalSlots) {
         this.opportunityId = opportunityId;
         this.title = title;
@@ -149,8 +180,12 @@ public class InternshipOpportunity implements Serializable {
         this.preferredMajor = preferredMajor;
         this.openingDate = openingDate;
         this.closingDate = closingDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
         this.companyName = companyName;
         this.representativeId = representativeId;
+        this.createdBy = representativeId;
+        this.companyRepEmail = representativeId;
         this.totalSlots = Math.min(totalSlots, MAX_SLOTS);
         this.status = InternshipStatus.PENDING;
         this.filledSlots = 0;
@@ -212,6 +247,7 @@ public class InternshipOpportunity implements Serializable {
         filledSlots++;
         if (filledSlots >= totalSlots) {
             status = InternshipStatus.FILLED;
+            visible = false; // Automatically hide when filled
         }
         return true;
     }
@@ -229,6 +265,7 @@ public class InternshipOpportunity implements Serializable {
         filledSlots--;
         if (status == InternshipStatus.FILLED && filledSlots < totalSlots) {
             status = InternshipStatus.APPROVED;
+            visible = true; // Make visible again when slots become available
         }
         return true;
     }
@@ -243,6 +280,25 @@ public class InternshipOpportunity implements Serializable {
     }
 
     /**
+     * Checks if the internship can accept applications.
+     * Same as isAcceptingApplications() - provides more readable method name.
+     * 
+     * @return true if accepting applications, false otherwise
+     */
+    public boolean canAcceptApplications() {
+        return isAcceptingApplications();
+    }
+
+    /**
+     * Checks if the internship is completely filled.
+     * 
+     * @return true if all slots are filled, false otherwise
+     */
+    public boolean isFilled() {
+        return filledSlots >= totalSlots;
+    }
+
+    /**
      * Checks if the internship can be edited by the representative.
      * Only PENDING internships can be edited (before staff approval).
      * 
@@ -253,17 +309,58 @@ public class InternshipOpportunity implements Serializable {
     }
 
     /**
-     * Checks if the internship matches a student's major.
+     * Checks if this opportunity matches the student's major.
+     * All students can see all internships, but preferred major indicates better fit.
      * 
-     * @param studentMajor the student's major to check
-     * @return true if preferred major is "Any" or matches student's major (case-insensitive)
+     * @param studentMajor the student's major
+     * @return always true - all students can see all internships regardless of major
      */
     public boolean matchesMajor(String studentMajor) {
-        if (preferredMajor == null || studentMajor == null) {
+        // Allow all students to see all internships regardless of major preference
+        return true;
+    }
+
+    /**
+     * Checks if the internship is eligible for a specific student.
+     * 
+     * @param student the student to check
+     * @return true if student is eligible
+     */
+    public boolean isEligibleForStudent(model.Student student) {
+        if (student == null) {
             return false;
         }
-        return "Any".equalsIgnoreCase(preferredMajor) || 
-               preferredMajor.equalsIgnoreCase(studentMajor);
+        return matchesMajor(student.getMajor()) && student.canApplyForLevel(level);
+    }
+
+    /**
+     * Checks if the application period is currently open.
+     * 
+     * @return true if applications are being accepted
+     */
+    public boolean isApplicationOpen() {
+        if (status != InternshipStatus.APPROVED) {
+            return false;
+        }
+        LocalDate today = LocalDate.now();
+        return !today.isBefore(openingDate) && !today.isAfter(closingDate);
+    }
+
+    /**
+     * Increments the filled slots count.
+     * 
+     * @return true if increment was successful
+     */
+    public boolean incrementFilledSlots() {
+        if (filledSlots >= totalSlots) {
+            return false;
+        }
+        filledSlots++;
+        if (filledSlots >= totalSlots) {
+            status = InternshipStatus.FILLED;
+            visible = false; // Automatically hide when filled
+        }
+        return true;
     }
 
     /**
@@ -281,10 +378,110 @@ public class InternshipOpportunity implements Serializable {
     }
 
     /**
+     * Gets the visibility status of the internship.
+     * 
+     * @return true if visible, false if hidden
+     */
+    public boolean isVisible() {
+        return this.visible;
+    }
+    
+    /**
+     * Gets the visibility status of the internship (alias for JSON serialization).
+     * 
+     * @return true if visible, false if hidden
+     */
+    public boolean getVisibility() {
+        return this.visible;
+    }
+
+    /**
      * Toggles the visibility of the internship.
      */
     public void toggleVisibility() {
         this.visible = !this.visible;
+    }
+
+    /**
+     * Sets the visibility of the internship.
+     * 
+     * @param visible the visibility flag
+     */
+    public void setVisibility(boolean visible) {
+        this.visible = visible;
+    }
+
+    /**
+     * Gets the email of the representative who created this opportunity.
+     * 
+     * @return the creator's email
+     */
+    public String getCreatedBy() {
+        return createdBy != null ? createdBy : representativeId;
+    }
+
+    /**
+     * Sets the email of the representative who created this opportunity.
+     * 
+     * @param createdBy the creator's email
+     */
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    /**
+     * Gets the company representative's email.
+     * 
+     * @return the company rep email
+     */
+    public String getCompanyRepEmail() {
+        return companyRepEmail != null ? companyRepEmail : representativeId;
+    }
+
+    /**
+     * Sets the company representative's email.
+     * 
+     * @param companyRepEmail the company rep email
+     */
+    public void setCompanyRepEmail(String companyRepEmail) {
+        this.companyRepEmail = companyRepEmail;
+    }
+
+    /**
+     * Gets the total number of slots (alias for getTotalSlots).
+     * 
+     * @return the total number of slots
+     */
+    public int getSlots() {
+        return totalSlots;
+    }
+
+    /**
+     * Sets the total number of slots (alias for setTotalSlots).
+     * 
+     * @param slots the number of slots
+     */
+    public void setSlots(int slots) {
+        this.totalSlots = Math.min(slots, MAX_SLOTS);
+    }
+
+    /**
+     * Gets the internship ID (alias for getOpportunityId).
+     * 
+     * @return the internship ID
+     */
+    public String getInternshipId() {
+        return opportunityId;
+    }
+
+    /**
+     * Sets the internship ID (alias for setOpportunityId).
+     * Used for CSV persistence.
+     * 
+     * @param internshipId the internship ID to set
+     */
+    public void setInternshipId(String internshipId) {
+        this.opportunityId = internshipId;
     }
 
     /**

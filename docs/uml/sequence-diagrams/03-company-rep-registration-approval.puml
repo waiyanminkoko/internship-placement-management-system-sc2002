@@ -1,0 +1,308 @@
+@startuml company-rep-registration-approval
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 200
+skinparam BoxPadding 10
+
+title Company Representative Registration and Staff Approval Process
+
+actor "Company\nRepresentative" as CompanyRep #LightBlue
+participant "Frontend\nUI" as Frontend #LightYellow
+participant "AuthenticationController" as AuthController #LightGreen
+participant "AuthenticationServiceImpl" as AuthService #LightGreen
+participant "ValidationUtil" as Validator #LightCyan
+participant "CompanyRepresentativeRepository" as RepRepo #LightPink
+participant "CSV Storage" as CSV #LightGray
+
+actor "Career Center\nStaff" as Staff #LightBlue
+participant "StaffController" as StaffController #LightGreen
+participant "StaffServiceImpl" as StaffService #LightGreen
+participant "CareerCenterStaffRepository" as StaffRepo #LightPink
+
+== Company Representative Registration ==
+
+CompanyRep -> Frontend: Fill registration form\n(name, email, password,\ncompanyName, industry, position)
+activate Frontend
+
+Frontend -> Frontend: Validate form fields\n(client-side)
+
+Frontend -> AuthController: POST /api/auth/register-representative\nRegisterRepresentativeRequest
+activate AuthController
+
+AuthController -> AuthController: Validate required fields:\n- name\n- email\n- password\n- companyName\n- industry
+
+alt Invalid Input
+    AuthController --> Frontend: 400 Bad Request\n{"success": false, "message": "Field cannot be empty"}
+    Frontend --> CompanyRep: Show error message
+else Valid Input
+    
+    AuthController -> AuthService: registerRepresentative(\nrepresentativeId, name, email,\npassword, companyName,\nindustry, position)
+    activate AuthService
+    
+    AuthService -> Validator: isValidEmail(email)
+    activate Validator
+    Validator --> AuthService: true/false
+    deactivate Validator
+    
+    alt Invalid Email Format
+        AuthService --> AuthController: throw InvalidInputException("Invalid email format")
+        AuthController --> Frontend: 400 Bad Request
+        Frontend --> CompanyRep: Show "Invalid email format"
+    else Valid Email
+        
+        AuthService -> Validator: isValidPassword(password)
+        activate Validator
+        Validator --> AuthService: true/false (min 6 chars)
+        deactivate Validator
+        
+        alt Weak Password
+            AuthService --> AuthController: throw InvalidInputException("Password must be at least 6 characters")
+            AuthController --> Frontend: 400 Bad Request
+            Frontend --> CompanyRep: Show "Password too short"
+        else Strong Password
+            
+            AuthService -> RepRepo: findById(email)
+            activate RepRepo
+            RepRepo -> CSV: Read representative by email
+            activate CSV
+            CSV --> RepRepo: Optional<CompanyRepresentative>
+            deactivate CSV
+            RepRepo --> AuthService: Optional<CompanyRepresentative>
+            deactivate RepRepo
+            
+            alt Representative Already Exists
+                AuthService --> AuthController: throw BusinessRuleException(\n"Representative with this email already exists")
+                AuthController --> Frontend: 409 Conflict
+                Frontend --> CompanyRep: Show "Email already registered"
+            else Representative Not Found (New)
+                
+                AuthService -> AuthService: Create CompanyRepresentative:\n- userId = email\n- status = PENDING\n- isAuthorized = false\n- registrationDate = now()
+                
+                AuthService -> RepRepo: save(representative)
+                activate RepRepo
+                RepRepo -> CSV: Write representative to CSV\n(Append to representatives.csv)
+                activate CSV
+                CSV --> RepRepo: Success
+                deactivate CSV
+                RepRepo --> AuthService: CompanyRepresentative
+                deactivate RepRepo
+                
+                AuthService --> AuthController: void (success)
+                deactivate AuthService
+                
+                AuthController --> Frontend: 200 OK\n{"success": true,\n"message": "Registration submitted.\nPlease wait for staff approval."}
+                deactivate AuthController
+                
+                Frontend --> CompanyRep: Show success message:\n"Registration submitted successfully"
+                deactivate Frontend
+            end
+        end
+    end
+end
+
+|||
+
+== Staff Views Pending Representatives ==
+
+Staff -> Frontend: Navigate to\n"Pending Representatives" page
+activate Frontend
+
+Frontend -> StaffController: GET /api/staff/representatives/pending\n?staffId={staffId}
+activate StaffController
+
+StaffController -> StaffRepo: findById(staffId)
+activate StaffRepo
+StaffRepo -> CSV: Read staff by ID
+activate CSV
+CSV --> StaffRepo: Optional<CareerCenterStaff>
+deactivate CSV
+StaffRepo --> StaffController: CareerCenterStaff
+deactivate StaffRepo
+
+alt Staff Not Found
+    StaffController --> Frontend: 404 Not Found\n{"success": false, "message": "Staff not found"}
+    Frontend --> Staff: Show error message
+else Staff Found
+    
+    StaffController -> StaffService: viewPendingRepresentatives(staff)
+    activate StaffService
+    
+    StaffService -> RepRepo: findAll()
+    activate RepRepo
+    RepRepo -> CSV: Read all representatives
+    activate CSV
+    CSV --> RepRepo: List<CompanyRepresentative>
+    deactivate CSV
+    RepRepo --> StaffService: List<CompanyRepresentative>
+    deactivate RepRepo
+    
+    StaffService -> StaffService: Filter by status = PENDING
+    
+    StaffService --> StaffController: List<CompanyRepresentative>\n(pending only)
+    deactivate StaffService
+    
+    StaffController --> Frontend: 200 OK\n{"success": true,\n"data": [pending representatives],\n"message": "Pending representatives retrieved"}
+    deactivate StaffController
+    
+    Frontend --> Staff: Display pending representatives list:\n- Name\n- Email\n- Company Name\n- Industry\n- Position\n- Registration Date
+    deactivate Frontend
+end
+
+|||
+
+== Staff Approves/Rejects Representative ==
+
+Staff -> Frontend: Click Approve/Reject button\nfor specific representative
+activate Frontend
+
+Frontend -> Frontend: Show confirmation dialog:\n"Are you sure you want to\napprove/reject this representative?"
+
+Staff -> Frontend: Confirm decision
+
+Frontend -> StaffController: POST /api/staff/representatives/{representativeId}/authorize\n?staffId={staffId}\nApprovalDecisionRequest\n{"approve": true/false}
+activate StaffController
+
+StaffController -> StaffRepo: findById(staffId)
+activate StaffRepo
+StaffRepo -> CSV: Read staff by ID
+activate CSV
+CSV --> StaffRepo: Optional<CareerCenterStaff>
+deactivate CSV
+StaffRepo --> StaffController: CareerCenterStaff
+deactivate StaffRepo
+
+alt Staff Not Found
+    StaffController --> Frontend: 404 Not Found
+    Frontend --> Staff: Show error
+else Staff Found
+    
+    StaffController -> StaffService: authorizeRepresentative(\nstaff, representativeId, approve)
+    activate StaffService
+    
+    StaffService -> RepRepo: findById(representativeId)
+    activate RepRepo
+    RepRepo -> CSV: Read representative by ID
+    activate CSV
+    CSV --> RepRepo: Optional<CompanyRepresentative>
+    deactivate CSV
+    RepRepo --> StaffService: CompanyRepresentative
+    deactivate RepRepo
+    
+    alt Representative Not Found
+        StaffService --> StaffController: throw ResourceNotFoundException(\n"Company representative not found")
+        StaffController --> Frontend: 404 Not Found
+        Frontend --> Staff: Show error
+    else Representative Found
+        
+        alt Already Processed
+            StaffService -> StaffService: Check if status != PENDING
+            StaffService --> StaffController: throw BusinessRuleException(\n"Representative has already been processed")
+            StaffController --> Frontend: 409 Conflict
+            Frontend --> Staff: Show "Already processed" message
+        else Status is PENDING
+            
+            alt Approve Decision
+                StaffService -> StaffService: representative.setStatus(APPROVED)\nrepresentative.setApprovedByStaffId(staffId)\nrepresentative.setAuthorized(true)
+                note right: Representative can now login
+            else Reject Decision
+                StaffService -> StaffService: representative.setStatus(REJECTED)\nrepresentative.setApprovedByStaffId(staffId)\nrepresentative.setAuthorized(false)
+                note right: Representative cannot login
+            end
+            
+            StaffService -> RepRepo: save(representative)
+            activate RepRepo
+            RepRepo -> CSV: Update representative in CSV\n(Rewrite representatives.csv)
+            activate CSV
+            CSV --> RepRepo: Success
+            deactivate CSV
+            RepRepo --> StaffService: CompanyRepresentative (updated)
+            deactivate RepRepo
+            
+            StaffService --> StaffController: void (success)
+            deactivate StaffService
+            
+            alt Approved
+                StaffController --> Frontend: 200 OK\n{"success": true,\n"message": "Representative authorized successfully"}
+                Frontend --> Staff: Show success message:\n"Representative approved"
+                
+                note right: Representative can now login\nand will see updated status\nwhen attempting to sign in
+            else Rejected
+                StaffController --> Frontend: 200 OK\n{"success": true,\n"message": "Representative rejected successfully"}
+                deactivate StaffController
+                Frontend --> Staff: Show success message:\n"Representative rejected"
+                deactivate Frontend
+                
+                note right: Representative cannot login
+            end
+        end
+    end
+end
+
+|||
+
+== Representative Attempts Login (After Approval) ==
+
+CompanyRep -> Frontend: Enter credentials and login
+activate Frontend
+
+Frontend -> AuthController: POST /api/auth/login\nLoginRequest\n{"userId": "email@company.com",\n"password": "password123"}
+activate AuthController
+
+AuthController -> AuthService: login(userId, password)
+activate AuthService
+
+AuthService -> RepRepo: findById(userId)
+activate RepRepo
+RepRepo -> CSV: Read representative by email
+activate CSV
+CSV --> RepRepo: Optional<CompanyRepresentative>
+deactivate CSV
+RepRepo --> AuthService: CompanyRepresentative
+deactivate RepRepo
+
+alt User Not Found
+    AuthService --> AuthController: throw ResourceNotFoundException("User not found")
+    AuthController --> Frontend: 404 Not Found
+    Frontend --> CompanyRep: Show "Invalid credentials"
+else User Found
+    
+    AuthService -> AuthService: Verify password matches
+    
+    alt Wrong Password
+        AuthService --> AuthController: throw UnauthorizedException("Invalid credentials")
+        AuthController --> Frontend: 401 Unauthorized
+        Frontend --> CompanyRep: Show "Invalid credentials"
+    else Correct Password
+        
+        AuthService -> AuthService: Check if representative.isApproved()
+        
+        alt Not Approved (PENDING or REJECTED)
+            AuthService --> AuthController: throw UnauthorizedException(\n"Account is not yet approved")
+            AuthController --> Frontend: 401 Unauthorized
+            Frontend --> CompanyRep: Show "Account pending approval"
+        else Approved
+            
+            AuthService -> AuthService: Store active session:\nactiveSessions.put(userId, user)
+            
+            AuthService --> AuthController: User (CompanyRepresentative)
+            deactivate AuthService
+            
+            AuthController -> AuthController: Generate auth token:\ntoken = UUID.randomUUID()
+            
+            AuthController -> AuthController: Build LoginResponse:\n- userId\n- name\n- role: COMPANY_REPRESENTATIVE\n- email\n- token
+            
+            AuthController --> Frontend: 200 OK\n{"success": true,\n"data": LoginResponse,\n"message": "Login successful"}
+            deactivate AuthController
+            
+            Frontend -> Frontend: Store token in localStorage\nRedirect to dashboard
+            
+            Frontend --> CompanyRep: Navigate to\nCompany Representative Dashboard
+            deactivate Frontend
+            
+            note right: Representative can now:\n- Create internship opportunities\n- Manage applications\n- View student profiles
+        end
+    end
+end
+
+@enduml

@@ -12,17 +12,18 @@
         <relativePath/>
     </parent>
 
-    <groupId>edu.ntu.sc2002</groupId>
+    <groupId>sc2002.group6</groupId>
     <artifactId>internship-placement-system</artifactId>
     <version>1.0.0</version>
     <name>Internship Placement Management System</name>
-    <description>SC2002 Group 6 - Internship Placement Management System</description>
+    <description>SC2002 Group 6 - Internship Placement Management System with CSV-based persistence</description>
 
     <properties>
         <java.version>21</java.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <start-class>app.InternshipPlacementApplication</start-class>
     </properties>
 
     <dependencies>
@@ -79,6 +80,11 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -88,6 +94,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>app.InternshipPlacementApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -141,6 +148,8 @@
                     <failOnWarnings>false</failOnWarnings>
                     <doclint>none</doclint>
                     <quiet>true</quiet>
+                    <!-- Support for default package structure -->
+                    <sourcepath>${project.basedir}/src/main/java</sourcepath>
                 </configuration>
             </plugin>
         </plugins>

@@ -23,7 +23,7 @@ import lombok.EqualsAndHashCode;
  * <p><b>Registration:</b> Career center staff are automatically registered by
  * reading from the staff list CSV file at system initialization.</p>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */
@@ -38,6 +38,16 @@ public class CareerCenterStaff extends User {
      * Example: Career Services, Student Affairs, Internship Coordination
      */
     private String department;
+
+    /**
+     * List of company representative IDs approved by this staff member.
+     */
+    private java.util.List<String> approvedRepresentativeIds = new java.util.ArrayList<>();
+
+    /**
+     * List of internship opportunity IDs approved by this staff member.
+     */
+    private java.util.List<String> approvedInternshipIds = new java.util.ArrayList<>();
 
     /**
      * Default constructor required for serialization.
@@ -109,6 +119,34 @@ public class CareerCenterStaff extends User {
      */
     public boolean canGenerateReports() {
         return true;
+    }
+
+    /**
+     * Authorizes a company representative by adding their ID to the approved list.
+     * 
+     * @param representativeId the ID of the representative to authorize
+     */
+    public void authorizeRepresentative(String representativeId) {
+        if (approvedRepresentativeIds == null) {
+            approvedRepresentativeIds = new java.util.ArrayList<>();
+        }
+        if (!approvedRepresentativeIds.contains(representativeId)) {
+            approvedRepresentativeIds.add(representativeId);
+        }
+    }
+
+    /**
+     * Approves an internship by adding its ID to the approved list.
+     * 
+     * @param internshipId the ID of the internship to approve
+     */
+    public void approveInternship(String internshipId) {
+        if (approvedInternshipIds == null) {
+            approvedInternshipIds = new java.util.ArrayList<>();
+        }
+        if (!approvedInternshipIds.contains(internshipId)) {
+            approvedInternshipIds.add(internshipId);
+        }
     }
 
     /**

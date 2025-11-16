@@ -28,7 +28,7 @@ import java.util.Map;
  * }
  * </pre>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */
@@ -122,6 +122,10 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<Object> handleGlobalException(
             Exception ex, WebRequest request) {
+        // Log the full stack trace for debugging
+        System.err.println("ERROR: Unexpected exception occurred:");
+        ex.printStackTrace();
+        
         Map<String, Object> body = createErrorBody(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "An unexpected error occurred: " + ex.getMessage(),

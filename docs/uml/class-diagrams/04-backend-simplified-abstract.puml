@@ -1,0 +1,304 @@
+@startuml backend-simplified-abstract
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam padding 3
+skinparam nodesep 60
+skinparam ranksep 60
+
+' Styling for notes (yellow sticky note style)
+skinparam noteBorderColor #D4A017
+skinparam noteBackgroundColor #FFFACD
+skinparam noteFontColor #000000
+skinparam noteFontStyle bold
+skinparam noteShadowing true
+
+' Different colors for different types
+skinparam class {
+    BackgroundColor<<abstract>> #FFE4B5
+    BorderColor<<abstract>> #FF8C00
+    BackgroundColor<<interface>> #E0F2F7
+    BorderColor<<interface>> #0277BD
+    BackgroundColor<<enum>> #F3E5F5
+    BorderColor<<enum>> #7B1FA2
+    BackgroundColor<<exception>> #FFEBEE
+    BorderColor<<exception>> #C62828
+    BackgroundColor<<concrete>> #E8F5E9
+    BorderColor<<concrete>> #388E3C
+}
+
+' Package background colors
+skinparam packageBackgroundColor #FFFFFF
+skinparam packageBorderColor #999999
+
+title Internship Placement Management System\nBackend Architecture (Simplified)
+
+' ============================================
+' MODEL LAYER - Domain Entities
+' ============================================
+package "Model Layer" #E8F5E9 {
+    
+    abstract class User <<abstract>> {
+        + {abstract} getDisplayInfo(): String
+    }
+    
+    class Student <<concrete>> {
+        + canApplyForLevel(): boolean
+        + hasMaxApplications(): boolean
+    }
+    
+    class CareerCenterStaff <<concrete>> {
+        + hasAdminPrivileges(): boolean
+        + canAuthorizeRepresentatives(): boolean
+    }
+    
+    class CompanyRepresentative <<concrete>> {
+        + canCreateInternship(): boolean
+        + isApproved(): boolean
+    }
+    
+    class Application <<concrete>> {
+        + isPending(): boolean
+        + approve(): void
+    }
+    
+    class InternshipOpportunity <<concrete>> {
+        + isAcceptingApplications(): boolean
+        + hasAvailableSlots(): boolean
+    }
+    
+    class WithdrawalRequest <<concrete>> {
+        + approve(): void
+        + reject(): void
+    }
+    
+    ' Inheritance
+    User <|-- Student
+    User <|-- CareerCenterStaff
+    User <|-- CompanyRepresentative
+    
+    note right of User
+        **OOP: Abstraction & Inheritance**
+        Base class defines common
+        behavior for all user types
+    end note
+}
+
+' ============================================
+' SERVICE LAYER - Business Logic
+' ============================================
+package "Service Layer" #FFF9C4 {
+    
+    interface AuthenticationService <<interface>> {
+        + login(): User
+        + changePassword(): void
+    }
+    
+    interface StudentService <<interface>> {
+        + applyForInternship(): Application
+        + acceptPlacement(): void
+    }
+    
+    interface StaffService <<interface>> {
+        + authorizeRepresentative(): void
+        + approveOpportunity(): void
+    }
+    
+    interface CompanyRepresentativeService <<interface>> {
+        + createInternship(): InternshipOpportunity
+        + approveApplication(): void
+    }
+    
+    class AuthenticationServiceImpl <<concrete>> {
+    }
+    
+    class StudentServiceImpl <<concrete>> {
+    }
+    
+    class StaffServiceImpl <<concrete>> {
+    }
+    
+    class CompanyRepresentativeServiceImpl <<concrete>> {
+    }
+    
+    ' Interface implementation
+    AuthenticationService <|.. AuthenticationServiceImpl
+    StudentService <|.. StudentServiceImpl
+    StaffService <|.. StaffServiceImpl
+    CompanyRepresentativeService <|.. CompanyRepresentativeServiceImpl
+    
+    note top of AuthenticationService
+        **OOP: Interface**
+        Defines contracts for
+        business operations
+    end note
+}
+
+' ============================================
+' REPOSITORY LAYER - Data Access
+' ============================================
+package "Repository Layer" #E1F5FE {
+    
+    interface "Repository<T, ID>" as Repository <<interface>> {
+        + save(): T
+        + findById(): Optional<T>
+        + findAll(): List<T>
+    }
+    
+    interface StudentRepository <<interface>> {
+        + findByMajor(): List
+    }
+    
+    interface CompanyRepresentativeRepository <<interface>> {
+        + findByApprovalStatus(): List
+    }
+    
+    interface InternshipOpportunityRepository <<interface>> {
+        + findVisible(): List
+    }
+    
+    interface ApplicationRepository <<interface>> {
+        + findByStudentId(): List
+    }
+    
+    class CsvStudentRepository <<concrete>> {
+    }
+    
+    class CsvInternshipOpportunityRepository <<concrete>> {
+    }
+    
+    ' Repository hierarchy
+    Repository <|-- StudentRepository
+    Repository <|-- CompanyRepresentativeRepository
+    Repository <|-- InternshipOpportunityRepository
+    Repository <|-- ApplicationRepository
+    
+    StudentRepository <|.. CsvStudentRepository
+    InternshipOpportunityRepository <|.. CsvInternshipOpportunityRepository
+    
+    note top of Repository
+        **OOP: Generics**
+        Generic repository for
+        type-safe data access
+    end note
+}
+
+' ============================================
+' ENUMS - Type-Safe Constants
+' ============================================
+package "Enums" #F3E5F5 {
+    
+    enum UserRole <<enum>> {
+        STUDENT
+        COMPANY_REPRESENTATIVE
+        CAREER_CENTER_STAFF
+    }
+    
+    enum ApplicationStatus <<enum>> {
+        PENDING
+        SUCCESSFUL
+        UNSUCCESSFUL
+        WITHDRAWN
+    }
+    
+    enum ApprovalStatus <<enum>> {
+        PENDING
+        APPROVED
+        REJECTED
+    }
+    
+    enum InternshipLevel <<enum>> {
+        BASIC
+        INTERMEDIATE
+        ADVANCED
+    }
+    
+    enum InternshipStatus <<enum>> {
+        PENDING
+        APPROVED
+        REJECTED
+        CLOSED
+    }
+    
+    note bottom of UserRole
+        **OOP: Enumeration**
+        Type-safe constants
+    end note
+}
+
+' ============================================
+' EXCEPTIONS - Error Handling
+' ============================================
+package "Exceptions" #FFEBEE {
+    
+    class BusinessRuleException <<exception>> {
+    }
+    
+    class InvalidInputException <<exception>> {
+    }
+    
+    class ResourceNotFoundException <<exception>> {
+    }
+    
+    class UnauthorizedException <<exception>> {
+    }
+    
+    note top of BusinessRuleException
+        **OOP: Exception Hierarchy**
+        Custom exceptions for
+        specific error scenarios
+    end note
+}
+
+' ============================================
+' KEY RELATIONSHIPS
+' ============================================
+
+' Service dependencies on Repository (Dependency Injection)
+AuthenticationServiceImpl ..> StudentRepository : <<uses>>
+StudentServiceImpl ..> StudentRepository : <<uses>>
+StudentServiceImpl ..> InternshipOpportunityRepository : <<uses>>
+StudentServiceImpl ..> ApplicationRepository : <<uses>>
+CompanyRepresentativeServiceImpl ..> CompanyRepresentativeRepository : <<uses>>
+CompanyRepresentativeServiceImpl ..> InternshipOpportunityRepository : <<uses>>
+StaffServiceImpl ..> CompanyRepresentativeRepository : <<uses>>
+
+' Model associations
+Student "1" -- "0..3" Application : creates >
+CompanyRepresentative "1" -- "0..5" InternshipOpportunity : creates >
+InternshipOpportunity "1" -- "*" Application : receives >
+Student "1" -- "*" WithdrawalRequest : requests >
+
+' Model uses Enums
+User ..> UserRole : <<has>>
+Application ..> ApplicationStatus : <<has>>
+CompanyRepresentative ..> ApprovalStatus : <<has>>
+InternshipOpportunity ..> InternshipLevel : <<has>>
+InternshipOpportunity ..> InternshipStatus : <<has>>
+
+' Service throws Exceptions
+StudentServiceImpl ..> BusinessRuleException : <<throws>>
+AuthenticationServiceImpl ..> UnauthorizedException : <<throws>>
+AuthenticationServiceImpl ..> ResourceNotFoundException : <<throws>>
+
+' Legend
+legend bottom right
+    **OOP Principles Demonstrated:**
+    
+    • **Abstraction** - Abstract User class
+    • **Encapsulation** - Private fields, public methods
+    • **Inheritance** - User → Student/Staff/CompanyRep
+    • **Polymorphism** - Method overriding
+    • **Interface** - Service contracts
+    • **Generics** - Repository<T, ID>
+    • **Dependency Injection** - Service uses Repository
+    
+    **Symbol Legend:**
+    <<abstract>> - Abstract class
+    <<interface>> - Interface
+    <<concrete>> - Concrete implementation
+    <<enum>> - Enumeration
+    <<exception>> - Exception class
+end legend
+
+@enduml

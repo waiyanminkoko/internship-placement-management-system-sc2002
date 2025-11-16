@@ -20,7 +20,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *   <li>Max Age: 3600 seconds</li>
  * </ul>
  * 
- * @author SC2002 Group 6 - Member 1
+ * @author SC2002 SCED Group-6
  * @version 1.0
  * @since 2025-01-15
  */

@@ -32,7 +32,7 @@ import java.util.List;
  * <p><b>Thread Safety:</b> All methods are synchronized to prevent concurrent
  * modification issues when multiple users access the system.</p>
  * 
- * @author SC2002 Group 6
+ * @author SC2002 SCED Group-6
  * @version 1.0.0
  * @since 2025-10-14
  */

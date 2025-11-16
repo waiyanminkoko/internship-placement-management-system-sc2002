@@ -2,9 +2,7 @@
 ' SC2002 Group 6 - Internship Placement Management System
 ' Student Application Workflow
 
-title Internship Placement Management System
-subtitle Student Application Workflow
-footer SC2002 Group 6 - Page %page%
+title Internship Placement Management System - Student Application Workflow
 
 ' Participants
 actor Student as student
