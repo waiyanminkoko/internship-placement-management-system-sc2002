@@ -1,4 +1,5 @@
 "CompanyRepID","Name","CompanyName","Industry","Position","Email","Password","Status"
+"C63227","Barrack","White House","Government & Public Sector","Ex-President","barrack@gmail.com","password","rejected"
 "C60209","Charlie Lim","Microsoft","Technology","Sales Executive","charlielim@gmail.com","password","active"
 "C20570","Henry Tan","ST Engineering","Technology","Senior Engineer","henrytan@gmail.com","password","active"
 "C13880","Bob Lee","Google","Technology","Software Engineer","boblee@gmail.com","password","active"

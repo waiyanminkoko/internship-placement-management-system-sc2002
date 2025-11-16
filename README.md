@@ -86,7 +86,25 @@ Ensure the following are installed on your system:
 - **Node.js 18+** and npm ([Download Node.js](https://nodejs.org/))
 - **Git** ([Download Git](https://git-scm.com/downloads))
 
-Verify installations:
+#### Quick Install (Windows)
+
+**Install Java 21:**
+1. Download from [Adoptium](https://adoptium.net/temurin/releases/?version=21)
+2. Run installer → Check "Set JAVA_HOME" and "Add to PATH"
+3. Verify: `java -version`
+
+**Install Maven:**
+1. Download from [Maven Downloads](https://maven.apache.org/download.cgi) (Binary zip)
+2. Extract to `C:\Program Files\Apache\maven`
+3. Add to PATH: `C:\Program Files\Apache\maven\bin`
+4. Verify: `mvn -version`
+
+**Install Node.js:**
+1. Download from [nodejs.org](https://nodejs.org/) (LTS version)
+2. Run installer → Accept defaults (includes npm)
+3. Verify: `node -v` and `npm -v`
+
+Verify all installations:
 ```powershell
 java -version    # Should show Java 21+
 mvn -version     # Should show Maven 3.8+
