@@ -77,9 +77,23 @@ const MyInternships = ({ repId }) => {
     return internship.status === 'PENDING' || internship.status === 'REJECTED';
   };
 
-  // Check if internship can be deleted (only PENDING and REJECTED)
+  // Check if internship can be deleted
+  // Can delete if: PENDING, REJECTED, or APPROVED but after closing date
   const canDeleteInternship = (internship) => {
-    return internship.status === 'PENDING' || internship.status === 'REJECTED';
+    if (internship.status === 'PENDING' || internship.status === 'REJECTED') {
+      return true;
+    }
+    
+    // For approved opportunities, allow deletion if closing date has passed
+    if (internship.status === 'APPROVED') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time for date-only comparison
+      const closingDate = new Date(internship.closingDate);
+      closingDate.setHours(0, 0, 0, 0);
+      return today >= closingDate; // Allow deletion from closing date onwards
+    }
+    
+    return false;
   };
 
   const handleDelete = (internship) => {
@@ -212,9 +226,10 @@ const MyInternships = ({ repId }) => {
             <strong>Editing & Deletion Restrictions:</strong>
             <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
               <li>✅ <strong>Pending</strong> and <strong>Rejected</strong> opportunities can be edited, deleted, and resubmitted</li>
-              <li>❌ <strong>Approved</strong> opportunities cannot be edited or deleted (locked by Career Center Staff)</li>
+              <li>❌ <strong>Approved</strong> opportunities cannot be edited while accepting applications</li>
               <li>📝 Editing a rejected opportunity will automatically resubmit it for staff approval</li>
-              <li>🗑️ Deleting a pending opportunity removes it before staff review</li>
+              <li>🗑️ <strong>Approved</strong> opportunities can be deleted after their closing date</li>
+              <li>🔒 Opportunities automatically become hidden after the closing date</li>
             </ul>
           </Typography>
         </Alert>
@@ -329,7 +344,7 @@ const MyInternships = ({ repId }) => {
                       <Tooltip 
                         title={
                           !canDeleteInternship(internship) 
-                            ? "Can only delete pending or rejected opportunities" 
+                            ? "Can only delete pending, rejected, or approved opportunities after closing date" 
                             : "Delete Internship"
                         }
                       >

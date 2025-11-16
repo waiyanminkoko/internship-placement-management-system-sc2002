@@ -97,12 +97,13 @@ public interface CompanyRepresentativeService {
     
     /**
      * Deletes an internship opportunity.
-     * Can only delete opportunities that are PENDING or REJECTED.
-     * Approved opportunities cannot be deleted.
+     * Can delete opportunities that are:
+     * - PENDING or REJECTED (before approval)
+     * - APPROVED but past the closing date (no longer accepting applications)
      * 
      * @param rep The company representative
      * @param opportunityId The ID of the internship opportunity to delete
-     * @throws exception.BusinessRuleException if opportunity already approved
+     * @throws exception.BusinessRuleException if opportunity is approved and still accepting applications
      * @throws exception.UnauthorizedException if representative doesn't own the opportunity
      * @throws exception.ResourceNotFoundException if opportunity not found
      */

@@ -55,8 +55,10 @@ const Applications = ({ repId }) => {
     try {
       setLoading(true);
       const data = await representativeService.getMyInternships(repId);
-      // Only show approved internships for reviewing applications
-      const approvedInternships = (data || []).filter(internship => internship.status === 'APPROVED');
+      // Show approved and filled internships for reviewing applications
+      const approvedInternships = (data || []).filter(internship => 
+        internship.status === 'APPROVED' || internship.status === 'FILLED'
+      );
       setInternships(approvedInternships);
       if (approvedInternships && approvedInternships.length > 0) {
         selectInternship(approvedInternships[0]);
@@ -154,7 +156,7 @@ const Applications = ({ repId }) => {
       {/* Info alert about approved internships only */}
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2">
-          <strong>Note:</strong> Only showing applications for <strong>approved</strong> internship opportunities. 
+          <strong>Note:</strong> Only showing applications for <strong>approved</strong> and <strong>filled</strong> internship opportunities. 
           Pending or rejected opportunities will not appear here until they are approved by Career Center Staff.
         </Typography>
       </Alert>

@@ -223,12 +223,24 @@ public class CompanyRepresentativeServiceImpl implements CompanyRepresentativeSe
                 .filter(opp -> opp.getCreatedBy() != null && opp.getCreatedBy().equals(representative.getEmail()))
                 .toList();
         
+        java.time.LocalDate today = java.time.LocalDate.now();
+        
         // Calculate and set pending application count for each opportunity
+        // Also automatically hide opportunities past their closing date
         for (InternshipOpportunity opp : opportunities) {
             long pendingCount = applicationRepository.findByInternshipId(opp.getInternshipId()).stream()
                     .filter(app -> app.getStatus() == ApplicationStatus.PENDING)
                     .count();
             opp.setPendingApplicationCount((int) pendingCount);
+            
+            // Automatically hide opportunities after closing date
+            if (opp.getStatus() == InternshipStatus.APPROVED && 
+                opp.isVisible() && 
+                opp.getClosingDate() != null && 
+                today.isAfter(opp.getClosingDate())) {
+                opp.setVisibility(false);
+                opportunityRepository.save(opp);
+            }
         }
         
         return opportunities;
@@ -293,9 +305,19 @@ public class CompanyRepresentativeServiceImpl implements CompanyRepresentativeSe
             throw new UnauthorizedException("You can only delete your own opportunities");
         }
         
-        // Check if opportunity is approved - cannot delete after approval
-        if (existing.getStatus() == InternshipStatus.APPROVED) {
-            throw new BusinessRuleException("Cannot delete opportunities after they have been approved by Career Center Staff");
+        java.time.LocalDate today = java.time.LocalDate.now();
+        
+        // Allow deletion if:
+        // 1. Status is PENDING or REJECTED (before approval), OR
+        // 2. Status is APPROVED but closing date has passed
+        boolean canDelete = existing.getStatus() == InternshipStatus.PENDING || 
+                           existing.getStatus() == InternshipStatus.REJECTED ||
+                           (existing.getStatus() == InternshipStatus.APPROVED && 
+                            existing.getClosingDate() != null && 
+                            !today.isBefore(existing.getClosingDate()));
+        
+        if (!canDelete) {
+            throw new BusinessRuleException("Cannot delete opportunities that are approved and still accepting applications. You can delete after the closing date.");
         }
         
         // Delete the opportunity
