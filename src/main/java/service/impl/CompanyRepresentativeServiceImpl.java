@@ -65,9 +65,9 @@ public class CompanyRepresentativeServiceImpl implements CompanyRepresentativeSe
             throw new BusinessRuleException("Representatives can only create up to 5 internship opportunities");
         }
         
-        // Validate slots
-        if (opportunity.getSlots() > 10) {
-            throw new BusinessRuleException("Maximum 10 slots per internship");
+        // Validate slots (must be between 1 and 10)
+        if (opportunity.getSlots() < 1 || opportunity.getSlots() > 10) {
+            throw new BusinessRuleException("Number of slots must be between 1 and 10");
         }
         
         // Validate dates

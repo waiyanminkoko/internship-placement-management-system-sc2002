@@ -71,11 +71,18 @@ const CreateInternship = ({ repId }) => {
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    let processedValue = type === 'number' ? parseInt(value) || 0 : value;
+    
+    // Clamp slots value between 1 and 10
+    if (name === 'slots') {
+      processedValue = Math.max(1, Math.min(10, processedValue));
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseInt(value) || 0 : value
+      [name]: processedValue
     }));
-    console.log(`Field ${name} changed to:`, value);
+    console.log(`Field ${name} changed to:`, processedValue);
   };
 
   const handleSubmit = async (e) => {
@@ -103,8 +110,8 @@ const CreateInternship = ({ repId }) => {
       return;
     }
 
-    if (formData.slots < 1) {
-      toast.error('Number of slots must be at least 1');
+    if (formData.slots < 1 || formData.slots > 10) {
+      toast.error('Number of slots must be between 1 and 10');
       return;
     }
 
@@ -309,8 +316,8 @@ const CreateInternship = ({ repId }) => {
                 name="slots"
                 value={formData.slots}
                 onChange={handleChange}
-                inputProps={{ min: 1, max: 20 }}
-                helperText="Available positions"
+                inputProps={{ min: 1, max: 10 }}
+                helperText="Available positions (1-10 maximum)"
               />
             </Grid>
 
