@@ -231,9 +231,16 @@ public class Application implements Serializable {
     }
 
     /**
-     * Checks if the application can be withdrawn.
+     * Determines if this application can be withdrawn by the student.
      * 
-     * @return true if can be withdrawn
+     * Withdrawal is allowed for:
+     * 1. PENDING applications (not yet reviewed by company)
+     * 2. SUCCESSFUL applications that have NOT been accepted yet
+     * 
+     * Once a placement is accepted, withdrawal through the system is NOT allowed.
+     * Students must contact Career Center Staff directly for accepted placements.
+     * 
+     * @return true if can be withdrawn through the system
      */
     public boolean canBeWithdrawn() {
         return status == ApplicationStatus.PENDING || 

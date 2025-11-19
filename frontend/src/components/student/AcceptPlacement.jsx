@@ -111,6 +111,16 @@ const AcceptPlacement = () => {
         Review and accept your approved internship placements below.
       </Typography>
 
+      <Alert severity="warning" sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Important Notice
+        </Typography>
+        <Typography variant="body2">
+          <strong>Once you accept a placement, you cannot withdraw through the system.</strong><br />
+          If you need to withdraw from an accepted placement, you must contact your respective school's Career Support Staff directly.
+        </Typography>
+      </Alert>
+
       {error && (
         <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2 }}>
           {error}
@@ -322,8 +332,9 @@ const AcceptPlacement = () => {
                   Important Notice
                 </Typography>
                 <Typography variant="body2">
-                  By accepting this placement, you are making a commitment to complete this internship.
-                  Please ensure you understand the terms and conditions.
+                  By accepting this placement, you are making a commitment to complete this internship.<br />
+                  <strong>Once accepted, you cannot withdraw through the system.</strong> If you need to withdraw later, 
+                  you must contact your school's Career Support Staff directly.
                 </Typography>
               </Alert>
 

@@ -64,10 +64,11 @@ const WithdrawalRequest = () => {
       ]);
       
       // Filter for applications that can be withdrawn:
-      // 1. SUCCESSFUL (approved by company) - whether accepted or not
-      // Students can withdraw from approved applications before accepting OR after accepting
+      // 1. PENDING applications (not yet reviewed by company)
+      // 2. SUCCESSFUL applications that have NOT been accepted yet
+      // Note: Students cannot withdraw from accepted placements - they must contact career staff directly
       const withdrawableApps = applicationsData.filter(
-        app => app.status === 'SUCCESSFUL'
+        app => app.status === 'PENDING' || (app.status === 'SUCCESSFUL' && !app.placementAccepted)
       );
       setApplications(withdrawableApps);
       setWithdrawalRequests(withdrawalsData || []);
@@ -305,24 +306,27 @@ const WithdrawalRequest = () => {
               Important Information
             </Typography>
             <Typography variant="body2">
-              • You can request withdrawal from applications approved by companies<br />
-              • This includes both accepted and not-yet-accepted approved applications<br />
+              • You can request withdrawal from PENDING applications or SUCCESSFUL applications before acceptance<br />
+              • Once you accept a placement, you CANNOT withdraw through this system<br />
+              • If you need to withdraw from an accepted placement, contact your Career Center Staff directly<br />
               • All withdrawal requests require Career Center Staff approval<br />
               • You can edit pending withdrawal requests before they are processed<br />
-              • If rejected, you can submit a new withdrawal request<br />
-              • If approved, you cannot submit another withdrawal request for the same application
+              • If rejected, you can submit a new withdrawal request
             </Typography>
           </Alert>
 
           {applications.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="h6" color="textSecondary" gutterBottom>
-                No Approved Applications
+                No Withdrawable Applications
               </Typography>
               <Typography color="textSecondary">
-                You don't have any applications approved by companies that can be withdrawn.
+                You don't have any PENDING or approved (not-yet-accepted) applications that can be withdrawn.
               </Typography>
               <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+                Note: Accepted placements cannot be withdrawn through this system. Contact Career Center Staff if needed.
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
                 Check "My Applications" to see all your applications.
               </Typography>
             </Paper>
@@ -342,8 +346,14 @@ const WithdrawalRequest = () => {
                               {application.internshipTitle}
                             </Typography>
                             <Chip
-                              label={application.placementAccepted ? "ACCEPTED" : "APPROVED"}
-                              color={application.placementAccepted ? "success" : "primary"}
+                              label={
+                                application.status === 'PENDING' ? 'PENDING' :
+                                application.placementAccepted ? 'ACCEPTED' : 'APPROVED'
+                              }
+                              color={
+                                application.status === 'PENDING' ? 'warning' :
+                                application.placementAccepted ? 'success' : 'primary'
+                              }
                               size="small"
                               sx={{ ml: 2 }}
                             />
@@ -629,7 +639,9 @@ const WithdrawalRequest = () => {
                 </Typography>
                 <Typography variant="body2">
                   Your withdrawal request will be reviewed by Career Center Staff. 
-                  Approval is required before withdrawal is finalized.
+                  Approval is required before withdrawal is finalized.<br /><br />
+                  <strong>Note:</strong> This process is only for applications you have not yet accepted. 
+                  If you have already accepted a placement, you must contact your Career Center Staff directly.
                 </Typography>
               </Alert>
 
