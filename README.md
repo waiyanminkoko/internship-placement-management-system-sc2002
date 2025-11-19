@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="frontend/public/images/internship-logo-png.png" alt="Internship Placement Management System Logo" width="100"/>
+</div>
+
 # SC2002 Internship Placement Management System
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
@@ -6,7 +10,7 @@
 [![React](https://img.shields.io/badge/React-18.2-blue)]()
 
 > **A comprehensive web-based platform for managing internship opportunities, applications, and placement workflows.**  
-> Developed as part of SC2002 Object-Oriented Design & Programming course at NTU Singapore.
+> Developed as part of SC2002 Object-Oriented Design & Programming course at NTU, Singapore.
 
 ---
 
@@ -196,7 +200,7 @@ Sample users for testing (most users have default password: **`password`**):
 | `U2310002B` | Ng Jia Hao | `password` | 3 | Data Science & AI |
 | `U2310003C` | Lim Yi Xuan | `password` | 4 | Computer Engineering |
 | `U2310004D` | Chong Zhi Hao | `password` | 1 | Data Science & AI |
-| `U2310005E` | Wong Shu Hui | `newpassword` | 3 | Computer Science |
+| `U2310005E` | Wong Shu Hui | `password` | 3 | Computer Science |
 | `U2310006F` | Gerald Tang | `password` | 2 | Computer Science |
 
 **Company Representatives:**
