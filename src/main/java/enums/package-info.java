@@ -21,7 +21,7 @@
  * 
  * <h3>Application & Approval:</h3>
  * <ul>
- *   <li><b>ApplicationStatus</b> - Application states (PENDING, SUCCESSFUL, UNSUCCESSFUL, WITHDRAWN)</li>
+ *   <li><b>ApplicationStatus</b> - Application states (PENDING, SUCCESSFUL, REJECTED, WITHDRAWN)</li>
  *   <li><b>ApprovalStatus</b> - Approval workflow states (PENDING_APPROVAL, APPROVED, REJECTED)</li>
  * </ul>
  * 

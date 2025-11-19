@@ -163,6 +163,9 @@ public class StaffController {
      * @param companyName Optional company name filter
      * @param startDate Optional start date filter
      * @param endDate Optional end date filter
+     * @param applicationStatus Optional application status filter
+     * @param internshipLevel Optional internship level filter
+     * @param internshipStatus Optional internship status filter
      * @return Report data with statistics
      */
     @GetMapping("/reports")
@@ -172,7 +175,10 @@ public class StaffController {
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) String companyName,
             @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String applicationStatus,
+            @RequestParam(required = false) String internshipLevel,
+            @RequestParam(required = false) String internshipStatus) {
         CareerCenterStaff staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new RuntimeException("Staff not found"));
         
@@ -183,6 +189,9 @@ public class StaffController {
         filter.setCompanyName(companyName);
         filter.setStartDate(startDate);
         filter.setEndDate(endDate);
+        filter.setApplicationStatus(applicationStatus);
+        filter.setInternshipLevel(internshipLevel);
+        filter.setInternshipStatus(internshipStatus);
         
         Map<String, Object> report = staffService.generateReport(staff, filter);
         return ResponseEntity.ok(ApiResponse.success(report, "Report generated successfully"));

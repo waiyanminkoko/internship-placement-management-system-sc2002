@@ -58,7 +58,7 @@ const MyApplications = () => {
     const colors = {
       PENDING: 'warning',
       SUCCESSFUL: 'success',
-      UNSUCCESSFUL: 'error',
+      REJECTED: 'error',
       ACCEPTED: 'info',
       WITHDRAWN: 'default',
     };
@@ -69,7 +69,7 @@ const MyApplications = () => {
     const descriptions = {
       PENDING: 'Your application is under review by staff',
       SUCCESSFUL: 'Your application has been approved! You can now accept the placement',
-      UNSUCCESSFUL: 'Unfortunately, your application was not approved',
+      REJECTED: 'Your application was rejected',
       ACCEPTED: 'You have accepted this placement',
       WITHDRAWN: 'You have withdrawn from this application',
     };
@@ -131,7 +131,7 @@ const MyApplications = () => {
         <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 2, textAlign: 'center' }}>
             <Typography variant="h4" color="error.main">
-              {applications.filter(app => app.status === 'UNSUCCESSFUL').length}
+              {applications.filter(app => app.status === 'REJECTED').length}
             </Typography>
             <Typography color="textSecondary">Rejected</Typography>
           </Paper>
@@ -210,7 +210,7 @@ const MyApplications = () => {
               <Alert 
                 severity={
                   selectedApplication.status === 'SUCCESSFUL' ? 'success' :
-                  selectedApplication.status === 'UNSUCCESSFUL' ? 'error' :
+                  selectedApplication.status === 'REJECTED' ? 'error' :
                   selectedApplication.status === 'ACCEPTED' ? 'info' :
                   'warning'
                 }

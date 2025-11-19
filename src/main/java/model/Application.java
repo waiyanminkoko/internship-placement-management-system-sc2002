@@ -17,7 +17,7 @@ import java.util.Objects;
  * <p><b>Key Business Rules:</b></p>
  * <ul>
  *   <li>All applications start with PENDING status</li>
- *   <li>Company representatives can approve (→ SUCCESSFUL) or reject (→ UNSUCCESSFUL)</li>
+ *   <li>Company representatives can approve (→ SUCCESSFUL) or reject (→ REJECTED)</li>
  *   <li>Students can only accept placement for SUCCESSFUL applications</li>
  *   <li>Maximum 3 applications per student at any time</li>
  *   <li>Accepting one placement automatically withdraws all other applications</li>
@@ -27,7 +27,7 @@ import java.util.Objects;
  * <p><b>Status Flow:</b></p>
  * <pre>
  * PENDING → SUCCESSFUL (approved by company) → Placement Accepted
- *        → UNSUCCESSFUL (rejected by company)
+ *        → REJECTED (rejected by company)
  *        → WITHDRAWN (student request or automatic)
  * </pre>
  * 
@@ -135,12 +135,12 @@ public class Application implements Serializable {
     }
 
     /**
-     * Checks if the application has been rejected.
+     * Checks if the application was rejected.
      * 
-     * @return true if status is UNSUCCESSFUL
+     * @return true if status is REJECTED
      */
-    public boolean isUnsuccessful() {
-        return status == ApplicationStatus.UNSUCCESSFUL;
+    public boolean isRejected() {
+        return status == ApplicationStatus.REJECTED;
     }
 
     /**
@@ -178,7 +178,7 @@ public class Application implements Serializable {
      * @param reason reason for rejection
      */
     public void reject(String reason) {
-        this.status = ApplicationStatus.UNSUCCESSFUL;
+        this.status = ApplicationStatus.REJECTED;
         this.statusUpdateDate = LocalDateTime.now();
         this.representativeComments = reason;
     }

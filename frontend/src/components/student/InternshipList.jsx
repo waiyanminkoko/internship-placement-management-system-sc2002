@@ -84,6 +84,13 @@ const InternshipList = () => {
         );
       }
       
+      // Sort internships alphabetically by title
+      filteredInternships.sort((a, b) => {
+        const titleA = (a.title || '').toLowerCase();
+        const titleB = (b.title || '').toLowerCase();
+        return titleA.localeCompare(titleB);
+      });
+      
       setInternships(filteredInternships);
       setMyApplications(applicationsData);
     } catch (err) {

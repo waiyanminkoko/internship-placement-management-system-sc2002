@@ -113,7 +113,7 @@ class Application {
     - representativeComments: String
     + isPending(): boolean
     + isSuccessful(): boolean
-    + isUnsuccessful(): boolean
+    + isRejected(): boolean
     + isWithdrawn(): boolean
     + canAcceptPlacement(): boolean
     + approve(comments: String): void

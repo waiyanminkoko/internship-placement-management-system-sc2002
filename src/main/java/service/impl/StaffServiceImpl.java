@@ -3,6 +3,7 @@ package service.impl;
 import dto.ReportFilter;
 import enums.ApprovalStatus;
 import enums.ApplicationStatus;
+import enums.InternshipLevel;
 import enums.InternshipStatus;
 import exception.BusinessRuleException;
 import exception.ResourceNotFoundException;
@@ -285,6 +286,59 @@ public class StaffServiceImpl implements StaffService {
                     // Invalid date format, skip filter
                 }
             }
+
+            if (filter.getApplicationStatus() != null && !filter.getApplicationStatus().trim().isEmpty()
+                    && !filter.getApplicationStatus().equalsIgnoreCase("All Application Statuses")) {
+                String filterStatus = filter.getApplicationStatus().toUpperCase();
+                try {
+                    ApplicationStatus status = ApplicationStatus.valueOf(filterStatus);
+                    applications = applications.stream()
+                            .filter(app -> app.getStatus() == status)
+                            .collect(Collectors.toList());
+                } catch (IllegalArgumentException e) {
+                    // Invalid status, skip filter
+                }
+            }
+
+            if (filter.getInternshipLevel() != null && !filter.getInternshipLevel().trim().isEmpty()
+                    && !filter.getInternshipLevel().equalsIgnoreCase("All Internship Levels")) {
+                String filterLevel = filter.getInternshipLevel().toUpperCase();
+                try {
+                    InternshipLevel level = InternshipLevel.valueOf(filterLevel);
+                    applications = applications.stream()
+                            .filter(app -> {
+                                InternshipOpportunity opp = opportunityRepository.findById(app.getInternshipId()).orElse(null);
+                                return opp != null && opp.getLevel() == level;
+                            })
+                            .collect(Collectors.toList());
+                    
+                    internships = internships.stream()
+                            .filter(opp -> opp.getLevel() == level)
+                            .collect(Collectors.toList());
+                } catch (IllegalArgumentException e) {
+                    // Invalid level, skip filter
+                }
+            }
+
+            if (filter.getInternshipStatus() != null && !filter.getInternshipStatus().trim().isEmpty()
+                    && !filter.getInternshipStatus().equalsIgnoreCase("All Internship Statuses")) {
+                String filterStatus = filter.getInternshipStatus().toUpperCase();
+                try {
+                    InternshipStatus status = InternshipStatus.valueOf(filterStatus);
+                    applications = applications.stream()
+                            .filter(app -> {
+                                InternshipOpportunity opp = opportunityRepository.findById(app.getInternshipId()).orElse(null);
+                                return opp != null && opp.getStatus() == status;
+                            })
+                            .collect(Collectors.toList());
+                    
+                    internships = internships.stream()
+                            .filter(opp -> opp.getStatus() == status)
+                            .collect(Collectors.toList());
+                } catch (IllegalArgumentException e) {
+                    // Invalid status, skip filter
+                }
+            }
         }
 
         // Generate basic statistics
@@ -295,14 +349,17 @@ public class StaffServiceImpl implements StaffService {
                 .filter(app -> app.getStatus() == ApplicationStatus.SUCCESSFUL).count());
         report.put("acceptedApplications", applications.stream()
                 .filter(app -> app.getStatus() == ApplicationStatus.SUCCESSFUL).count());
-        report.put("unsuccessfulApplications", applications.stream()
-                .filter(app -> app.getStatus() == ApplicationStatus.UNSUCCESSFUL).count());
+        report.put("rejectedApplications", applications.stream()
+                .filter(app -> app.getStatus() == ApplicationStatus.REJECTED).count());
         report.put("withdrawnApplications", applications.stream()
                 .filter(app -> app.getStatus() == ApplicationStatus.WITHDRAWN).count());
 
-        // Total internships (approved and visible)
+        // Total internships (approved visible + filled regardless of visibility)
         long totalInternships = internships.stream()
-                .filter(opp -> opp.getStatus() == InternshipStatus.APPROVED && opp.isVisible())
+                .filter(opp -> (opp.getStatus() == InternshipStatus.APPROVED && opp.isVisible()) 
+                            || opp.getStatus() == InternshipStatus.FILLED
+                            || opp.getStatus() == InternshipStatus.REJECTED
+                            || opp.getStatus() == InternshipStatus.PENDING)
                 .count();
         report.put("totalInternships", totalInternships);
 
@@ -412,7 +469,13 @@ public class StaffServiceImpl implements StaffService {
         // Internships by Company
         Map<String, Long> internshipsByCompany = new HashMap<>();
         for (InternshipOpportunity opp : internships) {
+            // Include APPROVED (visible), FILLED (regardless of visibility), and REJECTED (if filtered)
             if (opp.getStatus() == InternshipStatus.APPROVED && opp.isVisible()) {
+                internshipsByCompany.merge(opp.getCompanyName(), 1L, Long::sum);
+            } else if (opp.getStatus() == InternshipStatus.FILLED) {
+                internshipsByCompany.merge(opp.getCompanyName(), 1L, Long::sum);
+            } else if (opp.getStatus() == InternshipStatus.REJECTED || opp.getStatus() == InternshipStatus.PENDING) {
+                // Include other statuses if they're in the filtered list (e.g., when filtering by status)
                 internshipsByCompany.merge(opp.getCompanyName(), 1L, Long::sum);
             }
         }
@@ -501,7 +564,7 @@ public class StaffServiceImpl implements StaffService {
         report.put("withdrawnStudents", withdrawnStudents);
         
         List<Map<String, Object>> rejectedStudents = applications.stream()
-                .filter(app -> app.getStatus() == ApplicationStatus.UNSUCCESSFUL)
+                .filter(app -> app.getStatus() == ApplicationStatus.REJECTED)
                 .map(app -> {
                     Map<String, Object> detail = new HashMap<>();
                     detail.put("studentId", app.getStudentId());
@@ -533,7 +596,10 @@ public class StaffServiceImpl implements StaffService {
         
         // Include internship details
         List<Map<String, Object>> internshipDetails = internships.stream()
-                .filter(opp -> opp.getStatus() == InternshipStatus.APPROVED && opp.isVisible())
+                .filter(opp -> (opp.getStatus() == InternshipStatus.APPROVED && opp.isVisible()) 
+                            || opp.getStatus() == InternshipStatus.FILLED
+                            || opp.getStatus() == InternshipStatus.REJECTED
+                            || opp.getStatus() == InternshipStatus.PENDING)
                 .map(opp -> {
                     Map<String, Object> detail = new HashMap<>();
                     detail.put("internshipId", opp.getInternshipId());
@@ -545,6 +611,7 @@ public class StaffServiceImpl implements StaffService {
                     detail.put("filledSlots", opp.getFilledSlots());
                     detail.put("openingDate", opp.getOpeningDate() != null ? opp.getOpeningDate().toString() : "");
                     detail.put("closingDate", opp.getClosingDate() != null ? opp.getClosingDate().toString() : "");
+                    detail.put("status", opp.getStatus().toString());
                     return detail;
                 })
                 .collect(Collectors.toList());

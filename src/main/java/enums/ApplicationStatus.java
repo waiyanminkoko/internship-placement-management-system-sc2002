@@ -9,14 +9,14 @@ package enums;
  * <p><b>Status Flow:</b></p>
  * <pre>
  * PENDING → SUCCESSFUL (approved by company representative)
- *        → UNSUCCESSFUL (rejected by company representative)
+ *        → REJECTED (rejected by company representative)
  *        → WITHDRAWN (student or staff initiated)
  * </pre>
  * 
  * <p><b>Business Rules:</b></p>
  * <ul>
  *   <li>All applications start with PENDING status</li>
- *   <li>Company Representatives can approve (→ SUCCESSFUL) or reject (→ UNSUCCESSFUL)</li>
+ *   <li>Company Representatives can approve (→ SUCCESSFUL) or reject (→ REJECTED)</li>
  *   <li>Students can request withdrawal, which requires staff approval</li>
  *   <li>If student accepts another placement, all other applications become WITHDRAWN</li>
  * </ul>
@@ -43,7 +43,7 @@ public enum ApplicationStatus {
      * Application has been rejected by the company representative.
      * Student cannot proceed with this internship.
      */
-    UNSUCCESSFUL("Unsuccessful"),
+    REJECTED("Rejected"),
     
     /**
      * Application has been withdrawn (by student request or automatic withdrawal).
@@ -84,10 +84,10 @@ public enum ApplicationStatus {
     /**
      * Checks if the status represents a final (non-changeable) state.
      * 
-     * @return true if status is SUCCESSFUL, UNSUCCESSFUL, or WITHDRAWN
+     * @return true if status is SUCCESSFUL, REJECTED, or WITHDRAWN
      */
     public boolean isFinalStatus() {
-        return this == SUCCESSFUL || this == UNSUCCESSFUL || this == WITHDRAWN;
+        return this == SUCCESSFUL || this == REJECTED || this == WITHDRAWN;
     }
 
     /**

@@ -148,12 +148,15 @@ package "Model Layer (Entities)" <<Rectangle>> #E8F5E9 {
         {field} - internshipId: String
         {field} - status: ApplicationStatus
         {field} - submissionDate: LocalDate
+        {field} - placementAccepted: boolean
         __
         {method} + isPending(): boolean
         {method} + isSuccessful(): boolean
+        {method} + isRejected(): boolean
         {method} + approve(): void
         {method} + reject(reason): void
         {method} + withdraw(): void
+        {method} + acceptPlacement(): boolean
     }
     
     class InternshipOpportunity <<C>> {
@@ -231,6 +234,7 @@ package "Service Layer (Business Logic)" <<Rectangle>> #FFF9C4 {
         {method} + approveWithdrawal(staff, reqId, approve): void
         {method} + viewPendingRepresentatives(staff): List
         {method} + generateReport(staff, filter): Map
+        {method} + getAllCompanies(staff): List<String>
     }
     
     interface CompanyRepresentativeService <<I>> {
@@ -282,11 +286,13 @@ package "Service Layer (Business Logic)" <<Rectangle>> #FFF9C4 {
         {field} - internshipRepository: InternshipOpportunityRepository
         {field} - applicationRepository: ApplicationRepository
         {field} - withdrawalRequestService: WithdrawalRequestService
+        {field} - studentRepository: StudentRepository
         __
         {method} + authorizeRepresentative(staff, repId, approve): void
         {method} + approveOpportunity(staff, oppId, approve): void
         {method} + processWithdrawal(staff, requestId, approve): void
         {method} + generateReport(staff, filter): Map
+        {method} + getAllCompanies(staff): List<String>
     }
     
     class CompanyRepresentativeServiceImpl <<C>> {
@@ -427,11 +433,13 @@ package "Enums (Type-Safe Constants)" <<Rectangle>> #F3E5F5 {
     enum ApplicationStatus {
         PENDING
         SUCCESSFUL
-        UNSUCCESSFUL
+        REJECTED
         WITHDRAWN
         __
         + isPending(): boolean
         + isSuccessful(): boolean
+        + isFinalStatus(): boolean
+        + canAcceptPlacement(): boolean
     }
     
     enum ApprovalStatus {
@@ -455,9 +463,12 @@ package "Enums (Type-Safe Constants)" <<Rectangle>> #F3E5F5 {
         PENDING
         APPROVED
         REJECTED
-        CLOSED
+        FILLED
         __
         + isApproved(): boolean
+        + acceptsApplications(): boolean
+        + isVisibleToStudents(): boolean
+        + canBeEdited(): boolean
     }
     
     note bottom of UserRole

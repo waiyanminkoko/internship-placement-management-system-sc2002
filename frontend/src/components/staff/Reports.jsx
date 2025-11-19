@@ -42,6 +42,9 @@ const Reports = ({ staffId }) => {
     companyName: '',
     startDate: '',
     endDate: '',
+    applicationStatus: '',
+    internshipLevel: '',
+    internshipStatus: '',
   });
   const reportContentRef = useRef(null);
 
@@ -53,6 +56,12 @@ const Reports = ({ staffId }) => {
   ];
 
   const years = ['1', '2', '3', '4'];
+
+  const applicationStatuses = ['PENDING', 'SUCCESSFUL', 'REJECTED', 'WITHDRAWN'];
+
+  const internshipLevels = ['BASIC', 'INTERMEDIATE'];
+
+  const internshipStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'FILLED'];
 
   // Fetch companies on mount
   useEffect(() => {
@@ -102,6 +111,9 @@ const Reports = ({ staffId }) => {
       companyName: '',
       startDate: '',
       endDate: '',
+      applicationStatus: '',
+      internshipLevel: '',
+      internshipStatus: '',
     });
     setReportData(null);
   };
@@ -268,8 +280,80 @@ const Reports = ({ staffId }) => {
             <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
+                select
+                value={filters.applicationStatus}
+                onChange={(e) => handleFilterChange('applicationStatus', e.target.value)}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected || selected === '') {
+                      return 'All Application Statuses';
+                    }
+                    return selected;
+                  },
+                }}
+              >
+                <MenuItem value="">All Application Statuses</MenuItem>
+                {applicationStatuses.map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                select
+                value={filters.internshipLevel}
+                onChange={(e) => handleFilterChange('internshipLevel', e.target.value)}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected || selected === '') {
+                      return 'All Internship Levels';
+                    }
+                    return selected;
+                  },
+                }}
+              >
+                <MenuItem value="">All Internship Levels</MenuItem>
+                {internshipLevels.map((level) => (
+                  <MenuItem key={level} value={level}>
+                    {level}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                select
+                value={filters.internshipStatus}
+                onChange={(e) => handleFilterChange('internshipStatus', e.target.value)}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected || selected === '') {
+                      return 'All Internship Statuses';
+                    }
+                    return selected;
+                  },
+                }}
+              >
+                <MenuItem value="">All Internship Statuses</MenuItem>
+                {internshipStatuses.map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
                 type="date"
-                label="Start Date"
+                label="Internship Opening Date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
                 InputLabelProps={{ shrink: true }}
@@ -280,7 +364,7 @@ const Reports = ({ staffId }) => {
               <TextField
                 fullWidth
                 type="date"
-                label="End Date"
+                label="Internship Closing Date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
                 InputLabelProps={{ shrink: true }}
@@ -479,7 +563,7 @@ const Reports = ({ staffId }) => {
                                   ? 'success'
                                   : app.status === 'PENDING'
                                   ? 'warning'
-                                  : app.status === 'UNSUCCESSFUL'
+                                  : app.status === 'REJECTED'
                                   ? 'error'
                                   : app.status === 'WITHDRAWN'
                                   ? 'default'

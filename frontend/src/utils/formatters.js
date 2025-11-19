@@ -63,7 +63,7 @@ export const formatStatus = (status) => {
   const statusMap = {
     PENDING: { label: 'Pending', color: 'warning' },
     SUCCESSFUL: { label: 'Successful', color: 'success' },
-    UNSUCCESSFUL: { label: 'Unsuccessful', color: 'error' },
+    REJECTED: { label: 'Rejected', color: 'error' },
     WITHDRAWN: { label: 'Withdrawn', color: 'default' },
     APPROVED: { label: 'Approved', color: 'success' },
     REJECTED: { label: 'Rejected', color: 'error' },

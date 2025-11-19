@@ -41,6 +41,21 @@ public class ReportFilter {
     private String endDate;
     
     /**
+     * Filter by application status (SUCCESSFUL, WITHDRAWN, REJECTED).
+     */
+    private String applicationStatus;
+    
+    /**
+     * Filter by internship level (BASIC, INTERMEDIATE).
+     */
+    private String internshipLevel;
+    
+    /**
+     * Filter by internship status (PENDING, APPROVED, REJECTED, FILLED).
+     */
+    private String internshipStatus;
+    
+    /**
      * Default constructor.
      */
     public ReportFilter() {
@@ -61,5 +76,29 @@ public class ReportFilter {
         this.companyName = companyName;
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+    
+    /**
+     * Full parameterized constructor with all filters.
+     * 
+     * @param major student major filter
+     * @param year student year filter
+     * @param companyName company name filter
+     * @param startDate start date filter
+     * @param endDate end date filter
+     * @param applicationStatus application status filter
+     * @param internshipLevel internship level filter
+     * @param internshipStatus internship status filter
+     */
+    public ReportFilter(String major, Integer year, String companyName, String startDate, String endDate, 
+                       String applicationStatus, String internshipLevel, String internshipStatus) {
+        this.major = major;
+        this.year = year;
+        this.companyName = companyName;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.applicationStatus = applicationStatus;
+        this.internshipLevel = internshipLevel;
+        this.internshipStatus = internshipStatus;
     }
 }

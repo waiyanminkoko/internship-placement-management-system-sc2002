@@ -179,7 +179,7 @@ public class CompanyRepresentativeServiceImpl implements CompanyRepresentativeSe
             
         } else {
             // Reject the application
-            application.setStatus(ApplicationStatus.UNSUCCESSFUL);
+            application.setStatus(ApplicationStatus.REJECTED);
             application.setStatusUpdateDate(java.time.LocalDateTime.now());
             applicationRepository.save(application);
         }

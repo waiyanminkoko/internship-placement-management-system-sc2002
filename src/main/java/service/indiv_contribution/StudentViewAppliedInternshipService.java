@@ -13,7 +13,7 @@ import java.util.List;
  * Handles "View Applied Internships" for Student users.
  * 
  * Allows a student to view all their internship applications and
- * filter them by status (Pending, Successful, Unsuccessful, Withdrawn).
+ * filter them by status (Pending, Successful, Rejected, Withdrawn).
  */
 public class StudentViewAppliedInternshipService {
 
