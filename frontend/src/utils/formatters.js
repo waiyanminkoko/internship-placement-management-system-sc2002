@@ -66,7 +66,6 @@ export const formatStatus = (status) => {
     REJECTED: { label: 'Rejected', color: 'error' },
     WITHDRAWN: { label: 'Withdrawn', color: 'default' },
     APPROVED: { label: 'Approved', color: 'success' },
-    REJECTED: { label: 'Rejected', color: 'error' },
   };
   return statusMap[status] || { label: status, color: 'default' };
 };
