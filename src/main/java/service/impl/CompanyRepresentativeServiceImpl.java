@@ -41,6 +41,9 @@ public class CompanyRepresentativeServiceImpl implements CompanyRepresentativeSe
     @Autowired
     private StudentRepository studentRepository;
 
+    @Autowired
+    private WithdrawalRequestService withdrawalRequestService;
+
     @Override
     public InternshipOpportunity createOpportunity(CompanyRepresentative representative, 
                                                    InternshipOpportunity opportunity) {
@@ -182,6 +185,13 @@ public class CompanyRepresentativeServiceImpl implements CompanyRepresentativeSe
             application.setStatus(ApplicationStatus.REJECTED);
             application.setStatusUpdateDate(java.time.LocalDateTime.now());
             applicationRepository.save(application);
+            
+            // Delete any pending withdrawal requests for this rejected application
+            // Since the application is now rejected, there's no need to keep withdrawal requests
+            withdrawalRequestService.findAll().stream()
+                    .filter(wr -> wr.getApplicationId().equals(applicationId))
+                    .filter(wr -> wr.getStatus() == enums.ApprovalStatus.PENDING)
+                    .forEach(wr -> withdrawalRequestService.delete(wr.getWithdrawalId()));
         }
     }
 
