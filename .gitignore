@@ -17,7 +17,7 @@ target/
 
 # Logs
 logs/
-!logs/.gitkeep
+#!logs/.gitkeep
 *.log
 
 # Ignore entire Maven build output directory (Created when building the project with Maven)
