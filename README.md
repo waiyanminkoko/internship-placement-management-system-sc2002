@@ -265,26 +265,24 @@ During application runtime, the system reads and writes to CSV files in this loc
 internship-placement-management-system/
 │
 ├── src/
-│   ├── main/
-│   │   ├── java/                    # Backend Java source code
-│   │   │   ├── app/                 # Application entry points
-│   │   │   ├── config/              # Spring configuration
-│   │   │   ├── controller/          # REST API controllers
-│   │   │   ├── dto/                 # Data Transfer Objects
-│   │   │   ├── enums/               # Enumerations
-│   │   │   ├── exception/           # Custom exceptions
-│   │   │   ├── model/               # Domain models
-│   │   │   ├── repository/          # Data access layer
-│   │   │   │   └── impl/            # Repository implementations
-│   │   │   ├── service/             # Business logic layer
-│   │   │   │   └── impl/            # Service implementations
-│   │   │   └── util/                # Utility classes
-│   │   │
-│   │   └── resources/
-│   │       ├── application.properties    # Spring Boot config
-│   │       └── data/                     # CSV data files (source)
-│   │
-│   └── test/                        # Test files (future)
+│   └── main/
+│       ├── java/                    # Backend Java source code
+│       │   ├── app/                 # Application entry points
+│       │   ├── config/              # Spring configuration
+│       │   ├── controller/          # REST API controllers
+│       │   ├── dto/                 # Data Transfer Objects
+│       │   ├── enums/               # Enumerations
+│       │   ├── exception/           # Custom exceptions
+│       │   ├── model/               # Domain models
+│       │   ├── repository/          # Data access layer
+│       │   │   └── impl/            # Repository implementations
+│       │   ├── service/             # Business logic layer
+│       │   │   └── impl/            # Service implementations
+│       │   └── util/                # Utility classes
+│       │
+│       └── resources/
+│           ├── application.properties    # Spring Boot config
+│           └── data/                     # CSV data files (source)
 │
 ├── frontend/
 │   ├── public/                      # Static assets
@@ -305,11 +303,6 @@ internship-placement-management-system/
 │       ├── class-diagrams/          # Class diagrams (.puml)
 │       ├── sequence-diagrams/       # Sequence diagrams (.puml)
 │       └── exported-images/         # Exported diagram images
-│
-├── target/                          # Maven build output
-│   ├── classes/                     # Compiled Java classes
-│   │   └── data/                    # CSV data files (runtime)
-│   └── internship-placement-system-1.0.0.jar
 │
 ├── logs/                            # Application log files
 │
