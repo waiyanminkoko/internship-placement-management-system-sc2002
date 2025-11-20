@@ -202,13 +202,17 @@ Sample users for testing (most users have default password: **`password`**):
 | `U2310004D` | Chong Zhi Hao | `password` | 1 | Data Science & AI |
 | `U2310005E` | Wong Shu Hui | `password` | 3 | Computer Science |
 | `U2310006F` | Gerald Tang | `password` | 2 | Computer Science |
+| `U2310007H` | Tan Jiong Hao | `password` | 2 | Computer Science |
+| `U2310008G` | Jasmine Tan | `password` | 2 | Computer Science |
+| `U2310009G` | Jamie Lee | `password` | 2 | Computer Science |
 
 **Company Representatives:**
 | Email | Name | Password | Company | Status |
 |-------|------|----------|---------|--------|
-| `charlielim@gmail.com` | Charlie Lim | `password` | Microsoft | Active |
+| `charlielim@gmail.com` | Charlie Lim | `newpassword` | Microsoft | Active |
 | `henrytan@gmail.com` | Henry Tan | `password` | ST Engineering | Active |
 | `boblee@gmail.com` | Bob Lee | `password` | Google | Active |
+| `ryanteo@gmail.com` | Ryan Teo | `password` | OpenAI | Active |
 | `alicetan@gmail.com` | Alice Tan | `password` | SAP | Active |
 | `michelle@gmail.com` | Michelle Richardson | `password` | Meta | Active |
 

@@ -220,12 +220,19 @@ public class StudentServiceImpl {
             internshipRepository.save(opportunity);
         }
         
-        // Withdraw all other applications
+        // Withdraw all other non-final applications
+        // Only withdraw PENDING or SUCCESSFUL (not accepted) applications
+        // REJECTED applications should remain REJECTED (they are already in a final state)
         List<Application> otherApplications = applicationRepository.findByStudentId(student.getUserId());
         for (Application other : otherApplications) {
-            if (!other.getApplicationId().equals(applicationId) && other.isActive()) {
-                other.setStatus(ApplicationStatus.WITHDRAWN);
-                applicationRepository.save(other);
+            if (!other.getApplicationId().equals(applicationId)) {
+                // Only withdraw applications that can be withdrawn (PENDING or SUCCESSFUL without acceptance)
+                if (other.getStatus() == ApplicationStatus.PENDING || 
+                    (other.getStatus() == ApplicationStatus.SUCCESSFUL && !other.isPlacementAccepted())) {
+                    other.setStatus(ApplicationStatus.WITHDRAWN);
+                    applicationRepository.save(other);
+                }
+                // REJECTED and already WITHDRAWN applications remain unchanged
             }
         }
     }
